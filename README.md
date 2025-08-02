@@ -1,2 +1,41 @@
 # Telegram Weather Bot
-\n\nA simple Telegram bot that provides current weather information for any city using the OpenWeather API.\n\n## Features\n- Get real-time weather for any city via Telegram\n- Uses OpenWeather API\n- Simple command: `/weather <city>`\n\n## Setup\n1. Clone this repository.\n2. Install dependencies:\n   ```\n   pip install -r requirements.txt\n   ```\n3. Set your OpenWeather API key as an environment variable:\n   ```\n   export OPENWEATHER_API_KEY=your_openweather_api_key\n   ```\n4. Run the bot:\n   ```\n   python bot.py\n   ```\n\nThe Telegram bot token is already set in the code.\n\n## Usage\n- Start the bot in Telegram.\n- Send `/weather <city>` (e.g., `/weather London`) to get the current weather.\n\n## Docker\nA Dockerfile will be provided for easy deployment.\n\n## License\nMIT License\n
+
+A simple Telegram bot that provides current weather information for any city using the OpenWeather API.
+
+## Features
+- Get real-time weather for any city via Telegram
+- Uses OpenWeather API
+- Simple command: `/weather <city>`
+
+## Setup
+1. Clone this repository.
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. **Set your OpenWeather API key as an environment variable:**
+   - Register for a free API key at https://openweathermap.org/appid
+   - Set the environment variable:
+     ```
+     export OPENWEATHER_API_KEY=your_openweather_api_key
+     ```
+   - Or create a `.env` file with:
+     ```
+     OPENWEATHER_API_KEY=your_openweather_api_key
+     ```
+4. Run the bot:
+   ```
+   python bot.py
+   ```
+
+The Telegram bot token is already set in the code. You can change it in `bot.py` if you want to use your own bot.
+
+## Usage
+- Start the bot in Telegram.
+- Send `/weather <city>` (e.g., `/weather London`) to get the current weather.
+
+## Docker
+A Dockerfile is provided for easy deployment.
+
+## License
+MIT License
