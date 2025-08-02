@@ -1,0 +1,1 @@
+FROM python:3.10-slim\n\nWORKDIR /app\n\nCOPY requirements.txt .\nRUN pip install --no-cache-dir -r requirements.txt\n\nCOPY . .\n\n# The OpenWeather API key should be set at runtime\n# ENV OPENWEATHER_API_KEY=your_openweather_api_key\n\nCMD ["python", "bot.py"]\n
