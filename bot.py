@@ -1,4 +1,5 @@
 import logging
+import os
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
@@ -26,8 +27,9 @@ async def weather(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text('Please provide a location. Usage: /weather <city>')
 
 def main():
-    # Replace 'YOUR_TELEGRAM_BOT_TOKEN' with your actual bot token
-    application = ApplicationBuilder().token('YOUR_TELEGRAM_BOT_TOKEN').build()
+    # Get the Telegram bot token from the environment variable, fallback to hardcoded value
+    token = os.getenv('TELEGRAM_BOT_TOKEN', 'YOUR_TELEGRAM_BOT_TOKEN')
+    application = ApplicationBuilder().token(token).build()
 
     application.add_handler(CommandHandler('start', start))
     application.add_handler(CommandHandler('weather', weather))
