@@ -1,9 +1,11 @@
 import os
+import sys
 import requests
+from itertools import groupby
 from telegram import Update, Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-TELEGRAM_TOKEN = os.getenv("OPENWEATHER_API_KEY")
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 def get_weather(city: str):
@@ -22,6 +24,17 @@ def get_weather(city: str):
     except Exception as e:
         return f"Error fetching weather: {e}"
 
+def _pick_daily_entries(forecast_list, days=3):
+    key = lambda e: e["dt_txt"].split()[0]
+    grouped = groupby(forecast_list, key)
+    return [next(group) for _, group in grouped][:days]
+
+def _format_daily(entry):
+    date = entry["dt_txt"].split()[0]
+    desc = entry["weather"][0]["description"].capitalize()
+    temp = entry["main"]["temp"]
+    return f"{date}: {desc}, {temp}°C"
+
 def get_forecast(city: str):
     if not OPENWEATHER_API_KEY:
         return "OpenWeather API key is not set."
@@ -31,20 +44,13 @@ def get_forecast(city: str):
         data = response.json()
         if response.status_code != 200:
             return data.get("message", "Failed to get forecast data.")
-        forecast_list = data["list"]
-        days = {}
-        for entry in forecast_list:
-            date = entry["dt_txt"].split(" ")[0]
-            if date not in days:
-                days[date] = entry
-            if len(days) == 3:
-                break
-        result = f"3-day forecast for {city.title()}:\n"
-        for date, entry in days.items():
-            weather = entry["weather"][0]["description"].capitalize()
-            temp = entry["main"]["temp"]
-            result += f"{date}: {weather}, {temp}°C\n"
-        return result.strip()
+        forecast_list = data.get("list")
+        if not isinstance(forecast_list, list):
+            return "Malformed forecast data received from API."
+        entries = _pick_daily_entries(forecast_list)
+        lines = [_format_daily(e) for e in entries]
+        header = f"3-day forecast for {city.title()}:\n"
+        return header + "\n".join(lines)
     except Exception as e:
         return f"Error fetching forecast: {e}"
 
@@ -68,6 +74,9 @@ def start(update: Update, context: CallbackContext):
     update.message.reply_text("Welcome to the Weather Bot! Use /weather <city> to get the current weather. Use /forecast <city> for a 3-day forecast.")
 
 def main():
+    if not TELEGRAM_TOKEN:
+        print("Error: TELEGRAM_TOKEN is not set. Please set the TELEGRAM_TOKEN environment variable or configuration value before running the bot.", file=sys.stderr)
+        sys.exit(1)
     updater = Updater(TELEGRAM_TOKEN, use_context=True)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
@@ -76,7 +85,6 @@ def main():
     updater.start_polling()
     updater.idle()
 
-# Expose for import and testing
 def test_weather(city: str) -> str:
     return get_weather(city)
 
