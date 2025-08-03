@@ -3,7 +3,8 @@ import requests
 from telegram import Update, Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
 
-TELEGRAM_TOKEN = "8060798481:AAE2UO7xYKOUrRq94NuYBgTSax38MSE8i7k"
+TELEGRAM_TOKEN = os.getenv("OPENWEATHER_API_KEY")
+
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 def get_weather(city: str):
