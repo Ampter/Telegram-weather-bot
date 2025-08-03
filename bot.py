@@ -4,9 +4,13 @@ import requests
 from itertools import groupby
 from telegram import Update, Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
+from mini_app import TelegramMiniApp
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
+
+# Instantiate the mini app
+mini_app = TelegramMiniApp()
 
 def get_weather(city: str):
     if not OPENWEATHER_API_KEY:
@@ -70,8 +74,26 @@ def forecast_command(update: Update, context: CallbackContext):
     result = get_forecast(city)
     update.message.reply_text(result)
 
+def miniapp_command(update: Update, context: CallbackContext):
+    if not context.args:
+        update.message.reply_text(mini_app.render_ui())
+        return
+    action = context.args[0]
+    if action == 'set_location':
+        if len(context.args) < 2:
+            update.message.reply_text("Usage: /miniapp set_location <city>")
+            return
+        location = " ".join(context.args[1:])
+        result = mini_app.set_location(location)
+        update.message.reply_text(result)
+    elif action == 'fetch_weather':
+        result = mini_app.fetch_weather()
+        update.message.reply_text(result)
+    else:
+        update.message.reply_text(mini_app.render_ui())
+
 def start(update: Update, context: CallbackContext):
-    update.message.reply_text("Welcome to the Weather Bot! Use /weather <city> to get the current weather. Use /forecast <city> for a 3-day forecast.")
+    update.message.reply_text("Welcome to the Weather Bot! Use /weather <city> to get the current weather. Use /forecast <city> for a 3-day forecast. Use /miniapp for the mini app interface.")
 
 def main():
     if not TELEGRAM_TOKEN:
@@ -82,6 +104,7 @@ def main():
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(CommandHandler("weather", weather_command))
     dp.add_handler(CommandHandler("forecast", forecast_command))
+    dp.add_handler(CommandHandler("miniapp", miniapp_command))
     updater.start_polling()
     updater.idle()
 
