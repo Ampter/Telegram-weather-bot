@@ -4,13 +4,12 @@ import requests
 from itertools import groupby
 from telegram import Update, Bot
 from telegram.ext import Updater, CommandHandler, CallbackContext
-from mini_app import TelegramMiniApp
 
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
-# Instantiate the mini app
-mini_app = TelegramMiniApp()
+# Instantiate the mini app inside the function to avoid circular import
+mini_app = None
 
 def get_weather(city: str):
     if not OPENWEATHER_API_KEY:
@@ -75,6 +74,10 @@ def forecast_command(update: Update, context: CallbackContext):
     update.message.reply_text(result)
 
 def miniapp_command(update: Update, context: CallbackContext):
+    global mini_app
+    if mini_app is None:
+        from mini_app import TelegramMiniApp
+        mini_app = TelegramMiniApp()
     if not context.args:
         update.message.reply_text(mini_app.render_ui())
         return
