@@ -2,7 +2,6 @@
 Telegram Mini App integration for weather queries.
 This class provides a simple interface for the Telegram bot to use as a mini app.
 """
-from bot import get_weather
 
 class TelegramMiniApp:
     def __init__(self):
@@ -18,6 +17,7 @@ class TelegramMiniApp:
         """Fetch weather for the last set location using get_weather from bot.py."""
         if not self.last_location:
             return "No location set. Please set a location first."
+        from bot import get_weather  # moved import here to break circular import
         self.last_weather = get_weather(self.last_location)
         return self.last_weather
 
