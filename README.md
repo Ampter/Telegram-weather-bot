@@ -1,67 +1,73 @@
 # Telegram Weather Bot
 
-A simple Telegram bot that provides current weather information for any city using the OpenWeather API.
+A Telegram bot that provides current weather and a 3-day forecast for any city using the OpenWeather API.
 
 ## Features
 
-- Get real-time weather for any city via Telegram
-- Uses OpenWeather API
-- Simple command: `/weather <city>`
+- `/weather <city>` for current weather
+- `/forecast <city>` for 3-day forecast
+- `/miniapp` command for a simple mini app style interface
 
-## Setup
+## Requirements
+
+- Python 3.10+
+- Telegram bot token from [BotFather](https://t.me/botfather)
+- OpenWeather API key from [openweathermap.org](https://openweathermap.org/appid)
+
+## Local setup
 
 1. Clone this repository.
 2. Install dependencies:
 
-   ```
-   pip install -r requirements.txt
-   ```
+```bash
+pip install -r requirements.txt
+```
 
-3. **Set your OpenWeather API key as an environment variable:**
-   - Register for a free API key at [https://openweathermap.org/appid](https://openweathermap.org/appid)
-   - Set the environment variable:
+3. Set environment variables:
 
-     ```
-     export OPENWEATHER_API_KEY=your_openweather_api_key
-     ```
+```bash
+export TELEGRAM_TOKEN=your_telegram_bot_token
+export OPENWEATHER_API_KEY=your_openweather_api_key
+```
 
-   - Or create a `.env` file with:
+> The app also supports `TELEGRAM_BOT_TOKEN` as a fallback alias for `TELEGRAM_TOKEN`.
 
-     ```
-     OPENWEATHER_API_KEY=your_openweather_api_key
-     ```
+4. Run:
 
-4. **Set your Telegram bot token as an environment variable or in a .env file:**
-   - Create a new bot and get your token from [BotFather](https://t.me/botfather)
-   - Set the environment variable:
-
-     ```
-     export TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-     ```
-
-   - Or add to your `.env` file:
-
-     ```
-     TELEGRAM_BOT_TOKEN=your_telegram_bot_token
-     ```
-
-   - Make sure `bot.py` loads the token from the environment.
-
-5. Run the bot:
-
-   ```
-   python bot.py
-   ```
+```bash
+python bot.py
+```
 
 ## Usage
 
-- Start the bot in Telegram.
-- Send `/weather <city>` (e.g., `/weather London`) to get the current weather.
+- `/start`
+- `/weather London`
+- `/forecast Tokyo`
+- `/miniapp`
 
 ## Docker
 
-A Dockerfile is provided for easy deployment.
+Build image:
 
-## License
+```bash
+docker build -t telegram-weather-bot .
+```
 
-MIT License
+Run container:
+
+```bash
+docker run --rm \
+  -e TELEGRAM_TOKEN=your_telegram_bot_token \
+  -e OPENWEATHER_API_KEY=your_openweather_api_key \
+  telegram-weather-bot
+```
+
+## Testing
+
+Run tests locally:
+
+```bash
+pytest -q
+```
+
+A GitHub Actions workflow is included at `.github/workflows/tests.yml` and runs tests on pushes and pull requests.
