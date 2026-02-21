@@ -1,73 +1,105 @@
-# Telegram Weather Bot
+# 🌤️ Telegram Weather Bot
 
-A Telegram bot that provides current weather and a 3-day forecast for any city using the OpenWeather API.
+A production-ready Telegram bot that provides real-time weather updates and 3-day forecasts using the OpenWeather API. Built with Python, `python-telegram-bot` v20 (async), and Docker.
 
-## Features
+## 🚀 Features
 
-- `/weather <city>` for current weather
-- `/forecast <city>` for 3-day forecast
-- `/miniapp` command for a simple mini app style interface
+- **Current Weather:** Get instant weather reports for any city.
+- **3-Day Forecast:** Detailed 3-day weather outlook.
+- **Mini App Interface:** A simulation of a Telegram Mini App for easy weather tracking.
+- **Async Architecture:** High-performance asynchronous implementation.
+- **Production Ready:** Fully containerized with Docker and Docker Compose.
+- **High Test Coverage:** Comprehensive unit and integration tests.
 
-## Requirements
+## 🛠️ Project Structure
+
+```text
+├── src/
+│   ├── bot/          # Telegram bot logic and handlers
+│   ├── weather/      # OpenWeather API client and models
+│   ├── miniapp/      # Mini app business logic
+│   └── config.py     # Configuration and environment management
+├── tests/            # Test suite
+├── Dockerfile        # Multi-stage production Docker image
+├── docker-compose.yml# Docker orchestration
+└── bot.py            # Application entry point
+```
+
+## 📋 Prerequisites
 
 - Python 3.10+
-- Telegram bot token from [BotFather](https://t.me/botfather)
-- OpenWeather API key from [openweathermap.org](https://openweathermap.org/appid)
+- A Telegram Bot Token (from [@BotFather](https://t.me/botfather))
+- An OpenWeather API Key (from [openweathermap.org](https://openweathermap.org/appid))
 
-## Local setup
+## ⚙️ Setup & Installation
 
-1. Clone this repository.
-2. Install dependencies:
+### Local Development
 
+1. **Clone the repository:**
+   ```bash
+   git clone <repository-url>
+   cd telegram-weather-bot
+   ```
+
+2. **Setup Environment:**
+   ```bash
+   # Create a virtual environment and activate it
+   # Install dependencies
+   pip install -r requirements.txt
+   pip install -r requirements-dev.txt
+   ```
+
+4. **Configure environment variables:**
+   Create a `.env` file from the example:
+   ```bash
+   cp .env.example .env
+   ```
+   Edit `.env` and add your tokens.
+
+5. **Run the bot:**
+   ```bash
+   python bot.py
+   ```
+
+### Running with Docker
+
+1. **Build and start the container:**
+   ```bash
+   docker-compose up -d --build
+   ```
+
+2. **Check logs:**
+   ```bash
+   docker-compose logs -f
+   ```
+
+## 🧪 Testing
+
+The project uses `pytest` with `pytest-asyncio`.
+
+Run tests:
 ```bash
-pip install -r requirements.txt
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+pytest
 ```
 
-3. Set environment variables:
+## 🤖 Usage
 
-```bash
-export TELEGRAM_TOKEN=your_telegram_bot_token
-export OPENWEATHER_API_KEY=your_openweather_api_key
-```
+Once the bot is running, send the following commands:
 
-> The app also supports `TELEGRAM_BOT_TOKEN` as a fallback alias for `TELEGRAM_TOKEN`.
+- `/start` - Welcome message and instructions.
+- `/weather <city>` - Get current weather (e.g., `/weather London`).
+- `/forecast <city>` - Get 3-day forecast (e.g., `/forecast Tokyo`).
+- `/miniapp` - Open the mini app interface simulation.
 
-4. Run:
+## 🔐 Security & Best Practices
 
-```bash
-python bot.py
-```
+- **Non-root user:** The Docker image runs as a non-privileged user.
+- **Secrets Management:** Environment variables are used for all sensitive data.
+- **Logging:** Structured logging for better observability.
+- **Async I/O:** Efficient handling of network requests.
+- **Type Hinting:** Extensive use of Python type hints for maintainability.
 
-## Usage
+## 📄 License
 
-- `/start`
-- `/weather London`
-- `/forecast Tokyo`
-- `/miniapp`
-
-## Docker
-
-Build image:
-
-```bash
-docker build -t telegram-weather-bot .
-```
-
-Run container:
-
-```bash
-docker run --rm \
-  -e TELEGRAM_TOKEN=your_telegram_bot_token \
-  -e OPENWEATHER_API_KEY=your_openweather_api_key \
-  telegram-weather-bot
-```
-
-## Testing
-
-Run tests locally:
-
-```bash
-pytest -q
-```
-
-A GitHub Actions workflow is included at `.github/workflows/tests.yml` and runs tests on pushes and pull requests.
+MIT
