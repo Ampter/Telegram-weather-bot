@@ -4,38 +4,38 @@ from src.weather.client import WeatherClient
 class TelegramMiniApp:
     def __init__(self, weather_client: WeatherClient):
         self.weather_client = weather_client
-        # Store user-specific default cities: {user_id: city}
-        self.user_cities: Dict[int, str] = {}
         self.last_weather: Dict[int, str] = {}
 
-    def set_user_city(self, user_id: int, city: str) -> str:
-        self.user_cities[user_id] = city
+    def set_user_city(self, user_data: Dict, city: str) -> str:
+        user_data['city'] = city
         return f"Default city set to: {city}"
 
-    def get_user_city(self, user_id: int) -> Optional[str]:
-        return self.user_cities.get(user_id)
+    def get_user_city(self, user_data: Dict) -> Optional[str]:
+        return user_data.get('city')
 
-    async def fetch_weather(self, user_id: int) -> str:
-        city = self.get_user_city(user_id)
+    async def fetch_weather(self, user_data: Dict) -> str:
+        city = self.get_user_city(user_data)
         if not city:
             return "No default city set. Please use /set_city <city> first."
 
         weather = await self.weather_client.get_current_weather(city)
         if weather:
             formatted = weather.format()
-            self.last_weather[user_id] = formatted
+            # Note: last_weather is still in-memory and not persisted across restarts
+            # unless we move it to user_data too. Let's do that for full persistence.
+            user_data['last_weather'] = formatted
             return formatted
         return f"Failed to fetch weather data for {city}."
 
-    def render_ui(self, user_id: int) -> str:
-        city = self.get_user_city(user_id)
+    def render_ui(self, user_data: Dict) -> str:
+        city = self.get_user_city(user_data)
         ui = "Telegram Weather Mini App\n"
         if city:
             ui += f"Default city: {city}\n"
         else:
             ui += "No default city set.\n"
 
-        last = self.last_weather.get(user_id)
+        last = user_data.get('last_weather')
         if last:
             ui += f"Last Weather: {last}\n"
         else:
