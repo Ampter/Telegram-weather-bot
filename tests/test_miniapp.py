@@ -6,13 +6,21 @@ from src.weather.models import WeatherData
 @pytest.mark.asyncio
 async def test_miniapp_flow():
     mock_weather_client = MagicMock()
-    app = TelegramMiniApp(mock_weather_client)
+    mock_db = AsyncMock()
+    app = TelegramMiniApp(mock_weather_client, mock_db)
     user_id = 123
 
+    # Mock DB behavior
+    mock_db.set_user_city.return_value = "Default city set to: Paris"
+    mock_db.get_user_city.return_value = "Paris"
+
     # Test set_user_city
-    res = app.set_user_city(user_id, "Paris")
+    res = await app.set_user_city(user_id, "Paris")
     assert "Default city set to: Paris" in res
-    assert app.get_user_city(user_id) == "Paris"
+
+    # Test get_user_city
+    city = await app.get_user_city(user_id)
+    assert city == "Paris"
 
     # Test fetch_weather success
     mock_weather = WeatherData(city="Paris", description="clear sky", temperature=20, feels_like=18)
@@ -23,12 +31,14 @@ async def test_miniapp_flow():
     assert app.last_weather[user_id] == res
 
     # Test render_ui
-    ui = app.render_ui(user_id)
+    ui = await app.render_ui(user_id)
     assert "Default city: Paris" in ui
     assert "Last Weather: Weather in Paris" in ui
 
 @pytest.mark.asyncio
 async def test_fetch_weather_no_city():
-    app = TelegramMiniApp(MagicMock())
+    mock_db = AsyncMock()
+    mock_db.get_user_city.return_value = None
+    app = TelegramMiniApp(MagicMock(), mock_db)
     res = await app.fetch_weather(456)
     assert "No default city set" in res

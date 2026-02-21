@@ -1,22 +1,21 @@
 from typing import Optional, Dict
 from src.weather.client import WeatherClient
+from src.database import Database
 
 class TelegramMiniApp:
-    def __init__(self, weather_client: WeatherClient):
+    def __init__(self, weather_client: WeatherClient, db: Database):
         self.weather_client = weather_client
-        # Store user-specific default cities: {user_id: city}
-        self.user_cities: Dict[int, str] = {}
+        self.db = db
         self.last_weather: Dict[int, str] = {}
 
-    def set_user_city(self, user_id: int, city: str) -> str:
-        self.user_cities[user_id] = city
-        return f"Default city set to: {city}"
+    async def set_user_city(self, user_id: int, city: str) -> str:
+        return await self.db.set_user_city(user_id, city)
 
-    def get_user_city(self, user_id: int) -> Optional[str]:
-        return self.user_cities.get(user_id)
+    async def get_user_city(self, user_id: int) -> Optional[str]:
+        return await self.db.get_user_city(user_id)
 
     async def fetch_weather(self, user_id: int) -> str:
-        city = self.get_user_city(user_id)
+        city = await self.get_user_city(user_id)
         if not city:
             return "No default city set. Please use /set_city <city> first."
 
@@ -27,8 +26,8 @@ class TelegramMiniApp:
             return formatted
         return f"Failed to fetch weather data for {city}."
 
-    def render_ui(self, user_id: int) -> str:
-        city = self.get_user_city(user_id)
+    async def render_ui(self, user_id: int) -> str:
+        city = await self.get_user_city(user_id)
         ui = "Telegram Weather Mini App\n"
         if city:
             ui += f"Default city: {city}\n"
