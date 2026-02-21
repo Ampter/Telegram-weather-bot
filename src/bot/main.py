@@ -3,12 +3,13 @@ import sys
 import asyncio
 import threading
 import os
-from telegram.ext import ApplicationBuilder, CommandHandler, PicklePersistence
+from telegram.ext import ApplicationBuilder, CommandHandler
 from src.config import config
 from src.weather.client import WeatherClient
 from src.miniapp.app import TelegramMiniApp
 from src.bot.handlers import Handlers
 from src.bot.web import run_flask
+from src.persistence import TextFilePersistence
 
 # Configure logging
 logging.basicConfig(
@@ -30,8 +31,8 @@ async def run_bot():
         os.makedirs(persistence_dir)
         logger.info(f"Created persistence directory: {persistence_dir}")
 
-    # Setup Persistence
-    persistence = PicklePersistence(filepath=config.PERSISTENCE_FILE)
+    # Setup Custom Text Persistence
+    persistence = TextFilePersistence(filepath=config.PERSISTENCE_FILE)
 
     weather_client = WeatherClient(config.OPENWEATHER_API_KEY)
     mini_app = TelegramMiniApp(weather_client)
