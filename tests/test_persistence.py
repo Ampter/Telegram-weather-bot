@@ -1,6 +1,5 @@
 import pytest
 import os
-import asyncio
 from src.persistence import TextFilePersistence
 
 @pytest.mark.asyncio
