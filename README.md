@@ -95,10 +95,24 @@ Once the bot is running, send the following commands:
 
 ## 🩺 Monitoring & Healthcheck
 
-The bot runs an internal web server on port `8000` (configurable via `PORT` env var).
+The bot runs an internal web server to provide a healthcheck endpoint. This is essential for keeping the bot alive on platforms like Render and for external monitoring.
 
-- **Healthcheck URL:** `http://<your-app-url>/health`
-- **Uptime Robot:** Point Uptime Robot to this URL to monitor the bot's availability.
+### Setup Uptime Robot
+
+1. Log in to [Uptime Robot](https://uptimerobot.com/).
+2. Click **Add New Monitor**.
+3. **Monitor Type:** Select `HTTP(s)`.
+4. **Friendly Name:** `Telegram Weather Bot`.
+5. **URL (or IP):** Enter your deployed application URL followed by `/health` (e.g., `https://your-app.onrender.com/health`).
+6. **Monitoring Interval:** `5 minutes` is usually sufficient.
+7. Click **Create Monitor**.
+
+### Setup on Render
+
+1. Deploy as a **Web Service**.
+2. Render will automatically provide a `PORT` environment variable (defaults to `10000` in our app to match Render).
+3. Under **Settings**, set the **Health Check Path** to `/health`.
+4. Ensure `TELEGRAM_TOKEN` and `OPENWEATHER_API_KEY` are added to **Environment Variables**.
 
 ## 🔐 Security & Best Practices
 
