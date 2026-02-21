@@ -2,84 +2,84 @@ import logging
 from telegram import Update
 from telegram.ext import ContextTypes
 from src.weather.client import WeatherClient
-from src.miniapp.app import TelegramMiniApp
 
 logger = logging.getLogger(__name__)
 
 class Handlers:
     """Class containing all Telegram command handlers."""
 
-    def __init__(self, weather_client: WeatherClient, mini_app: TelegramMiniApp):
+    def __init__(self, weather_client: WeatherClient):
         self.weather_client = weather_client
-        self.mini_app = mini_app
 
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Send a message when the command /start is issued."""
+        user_id = update.effective_user.id
+        logger.info(f"User {user_id} started the bot.")
         await update.message.reply_text(
             "Welcome to the Weather Bot!\n\n"
             "Commands:\n"
             "/set_city <city> - Set your default city (e.g., /set_city Kaliningrad)\n"
             "/weather [city] - Get weather for [city] or your default city\n"
-            "/forecast [city] - Get 3-day forecast\n"
-            "/miniapp - Open the mini app interface"
+            "/forecast [city] - Get 3-day forecast"
         )
 
     async def set_city_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Set the default city for the user."""
+        user_id = update.effective_user.id
         if not context.args:
+            logger.warning(f"User {user_id} used /set_city without arguments.")
             await update.message.reply_text("Usage: /set_city <city>")
             return
 
         city = " ".join(context.args)
-        user_id = update.effective_user.id
-        result = self.mini_app.set_user_city(user_id, city)
-        await update.message.reply_text(result)
+        context.user_data['city'] = city
+        logger.info(f"User {user_id} set city to: {city}")
+        await update.message.reply_text(f"Default city set to: {city}")
 
     async def weather_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Fetch and send current weather."""
         user_id = update.effective_user.id
-        city = " ".join(context.args) if context.args else self.mini_app.get_user_city(user_id)
+        city = " ".join(context.args) if context.args else context.user_data.get('city')
+
+        logger.info(f"User {user_id} requested weather for city: {city}")
 
         if not city:
+            logger.info(f"User {user_id} requested weather without city or default.")
             await update.message.reply_text("Please provide a city or set a default one with /set_city <city>")
             return
 
-        weather = await self.weather_client.get_current_weather(city)
-        if weather:
-            await update.message.reply_text(weather.format())
-        else:
-            await update.message.reply_text(f"Sorry, I couldn't find weather data for {city}.")
+        try:
+            weather = await self.weather_client.get_current_weather(city)
+            if weather:
+                logger.info(f"Successfully fetched weather for {city} for user {user_id}.")
+                await update.message.reply_text(weather.format())
+            else:
+                logger.warning(f"Weather not found for {city} for user {user_id}.")
+                await update.message.reply_text(f"Sorry, I couldn't find weather data for {city}.")
+        except Exception as e:
+            logger.error(f"Error fetching weather for {city}: {e}")
+            await update.message.reply_text("An error occurred while fetching weather data.")
 
     async def forecast_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Fetch and send 3-day forecast."""
         user_id = update.effective_user.id
-        city = " ".join(context.args) if context.args else self.mini_app.get_user_city(user_id)
+        city = " ".join(context.args) if context.args else context.user_data.get('city')
+
+        logger.info(f"User {user_id} requested forecast for city: {city}")
 
         if not city:
+            logger.info(f"User {user_id} requested forecast without city or default.")
             await update.message.reply_text("Please provide a city or set a default one with /set_city <city>")
             return
 
-        forecast = await self.weather_client.get_forecast(city)
-        if forecast:
-            await update.message.reply_text(forecast.format())
-        else:
-            await update.message.reply_text(f"Sorry, I couldn't find forecast data for {city}.")
-
-    async def miniapp_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Simulate a Mini App interface."""
-        user_id = update.effective_user.id
-
-        # If no arguments, show UI
-        if not context.args:
-            # Auto-fetch weather if default city exists
-            if self.mini_app.get_user_city(user_id):
-                await self.mini_app.fetch_weather(user_id)
-            await update.message.reply_text(self.mini_app.render_ui(user_id))
-            return
-
-        action = context.args[0]
-        if action == "fetch_weather":
-            result = await self.mini_app.fetch_weather(user_id)
-            await update.message.reply_text(result)
-        else:
-            await update.message.reply_text(self.mini_app.render_ui(user_id))
+        try:
+            forecast = await self.weather_client.get_forecast(city)
+            if forecast:
+                logger.info(f"Successfully fetched forecast for {city} for user {user_id}.")
+                await update.message.reply_text(forecast.format())
+            else:
+                logger.warning(f"Forecast not found for {city} for user {user_id}.")
+                await update.message.reply_text(f"Sorry, I couldn't find forecast data for {city}.")
+        except Exception as e:
+            logger.error(f"Error fetching forecast for {city}: {e}")
+            await update.message.reply_text("An error occurred while fetching forecast data.")

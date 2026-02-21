@@ -1,13 +1,13 @@
 import logging
 import sys
-import asyncio
+import os
 import threading
 from telegram.ext import ApplicationBuilder, CommandHandler
 from src.config import config
 from src.weather.client import WeatherClient
-from src.miniapp.app import TelegramMiniApp
 from src.bot.handlers import Handlers
 from src.bot.web import run_flask
+from src.persistence import TextFilePersistence
 
 # Configure logging
 logging.basicConfig(
@@ -16,23 +16,39 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def run_bot():
+def run_bot():
+    logger.info("Initializing bot...")
     try:
         config.validate()
+        logger.info("Configuration validated.")
     except ValueError as e:
-        logger.error(str(e))
+        logger.error(f"Configuration error: {e}")
         sys.exit(1)
 
-    weather_client = WeatherClient(config.OPENWEATHER_API_KEY)
-    mini_app = TelegramMiniApp(weather_client)
-    handlers = Handlers(weather_client, mini_app)
+    # Ensure persistence directory exists
+    persistence_dir = os.path.dirname(config.PERSISTENCE_FILE)
+    if persistence_dir and not os.path.exists(persistence_dir):
+        os.makedirs(persistence_dir, exist_ok=True)
+        logger.info(f"Created persistence directory: {persistence_dir}")
 
-    application = ApplicationBuilder().token(config.TELEGRAM_TOKEN).build()
+    # Setup Custom Text Persistence
+    logger.info(f"Loading persistence from {config.PERSISTENCE_FILE}")
+    persistence = TextFilePersistence(filepath=config.PERSISTENCE_FILE)
+
+    weather_client = WeatherClient(config.OPENWEATHER_API_KEY)
+    handlers = Handlers(weather_client)
+
+    logger.info("Building application...")
+    application = (
+        ApplicationBuilder()
+        .token(config.TELEGRAM_TOKEN)
+        .persistence(persistence)
+        .build()
+    )
 
     application.add_handler(CommandHandler("start", handlers.start))
     application.add_handler(CommandHandler("weather", handlers.weather_command))
     application.add_handler(CommandHandler("forecast", handlers.forecast_command))
-    application.add_handler(CommandHandler("miniapp", handlers.miniapp_command))
     application.add_handler(CommandHandler("set_city", handlers.set_city_command))
 
     # Setup healthcheck server (Flask) in a separate thread
@@ -41,12 +57,7 @@ async def run_bot():
     flask_thread.start()
 
     logger.info("Bot started and polling...")
+    application.run_polling()
 
-    async with application:
-        await application.initialize()
-        await application.start()
-        await application.updater.start_polling()
-
-        # Keep the coroutine running
-        while True:
-            await asyncio.sleep(3600)
+if __name__ == "__main__":
+    run_bot()

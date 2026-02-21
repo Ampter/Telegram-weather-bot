@@ -10,6 +10,8 @@ class Config:
     OPENWEATHER_API_KEY: str = os.getenv("OPENWEATHER_API_KEY")
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     PORT: int = int(os.getenv("PORT", "10000"))
+    # The custom text database file
+    PERSISTENCE_FILE: str = os.getenv("PERSISTENCE_FILE", "data/users.txt")
 
     def validate(self):
         missing = []
