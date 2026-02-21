@@ -1,37 +1,45 @@
-from typing import Optional
+from typing import Optional, Dict
 from src.weather.client import WeatherClient
 
 class TelegramMiniApp:
     def __init__(self, weather_client: WeatherClient):
         self.weather_client = weather_client
-        self.last_location: Optional[str] = None
-        self.last_weather: Optional[str] = None
+        # Store user-specific default cities: {user_id: city}
+        self.user_cities: Dict[int, str] = {}
+        self.last_weather: Dict[int, str] = {}
 
-    def set_location(self, location: str) -> str:
-        self.last_location = location
-        return f"Location set to: {location}"
+    def set_user_city(self, user_id: int, city: str) -> str:
+        self.user_cities[user_id] = city
+        return f"Default city set to: {city}"
 
-    async def fetch_weather(self) -> str:
-        if not self.last_location:
-            return "No location set. Please set a location first."
+    def get_user_city(self, user_id: int) -> Optional[str]:
+        return self.user_cities.get(user_id)
 
-        weather = await self.weather_client.get_current_weather(self.last_location)
+    async def fetch_weather(self, user_id: int) -> str:
+        city = self.get_user_city(user_id)
+        if not city:
+            return "No default city set. Please use /set_city <city> first."
+
+        weather = await self.weather_client.get_current_weather(city)
         if weather:
-            self.last_weather = weather.format()
-            return self.last_weather
-        return "Failed to fetch weather data."
+            formatted = weather.format()
+            self.last_weather[user_id] = formatted
+            return formatted
+        return f"Failed to fetch weather data for {city}."
 
-    def render_ui(self) -> str:
+    def render_ui(self, user_id: int) -> str:
+        city = self.get_user_city(user_id)
         ui = "Telegram Weather Mini App\n"
-        if self.last_location:
-            ui += f"Current location: {self.last_location}\n"
+        if city:
+            ui += f"Default city: {city}\n"
         else:
-            ui += "No location set.\n"
+            ui += "No default city set.\n"
 
-        if self.last_weather:
-            ui += f"Weather: {self.last_weather}\n"
+        last = self.last_weather.get(user_id)
+        if last:
+            ui += f"Last Weather: {last}\n"
         else:
-            ui += "No weather data.\n"
+            ui += "No weather data fetched yet.\n"
 
-        ui += "\nCommands:\n- set_location(<city>)\n- fetch_weather()\n- render_ui()\n"
+        ui += "\nCommands:\n- /set_city <city>\n- /weather (uses default)\n- /miniapp (shows this UI)\n"
         return ui

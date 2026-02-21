@@ -4,20 +4,20 @@ A production-ready Telegram bot that provides real-time weather updates and 3-da
 
 ## 🚀 Features
 
-- **Current Weather:** Get instant weather reports for any city.
+- **Default City:** Set your home city with `/set_city` for quick access.
+- **Current Weather:** Get instant weather reports for any city or your default location.
 - **3-Day Forecast:** Detailed 3-day weather outlook.
-- **Mini App Interface:** A simulation of a Telegram Mini App for easy weather tracking.
-- **Async Architecture:** High-performance asynchronous implementation.
-- **Production Ready:** Fully containerized with Docker and Docker Compose.
-- **High Test Coverage:** Comprehensive unit and integration tests.
+- **Mini App Interface:** A simulation of a Telegram Mini App that defaults to your set city.
+- **Healthcheck & Monitoring:** Built-in HTTP server for Uptime Robot or Render health checks.
+- **Async Architecture:** High-performance asynchronous implementation using `python-telegram-bot` and `aiohttp`.
 
 ## 🛠️ Project Structure
 
 ```text
 ├── src/
-│   ├── bot/          # Telegram bot logic and handlers
+│   ├── bot/          # Telegram bot logic, handlers, and health server
 │   ├── weather/      # OpenWeather API client and models
-│   ├── miniapp/      # Mini app business logic
+│   ├── miniapp/      # Mini app business logic and user preferences
 │   └── config.py     # Configuration and environment management
 ├── tests/            # Test suite
 ├── Dockerfile        # Multi-stage production Docker image
@@ -49,14 +49,14 @@ A production-ready Telegram bot that provides real-time weather updates and 3-da
    pip install -r requirements-dev.txt
    ```
 
-4. **Configure environment variables:**
+3. **Configure environment variables:**
    Create a `.env` file from the example:
    ```bash
    cp .env.example .env
    ```
    Edit `.env` and add your tokens.
 
-5. **Run the bot:**
+4. **Run the bot:**
    ```bash
    python bot.py
    ```
@@ -88,16 +88,24 @@ pytest
 Once the bot is running, send the following commands:
 
 - `/start` - Welcome message and instructions.
-- `/weather <city>` - Get current weather (e.g., `/weather London`).
-- `/forecast <city>` - Get 3-day forecast (e.g., `/forecast Tokyo`).
-- `/miniapp` - Open the mini app interface simulation.
+- `/set_city <city>` - Set your default city (e.g., `/set_city Kaliningrad`).
+- `/weather [city]` - Get current weather. If no city is provided, uses your default city.
+- `/forecast [city]` - Get 3-day forecast.
+- `/miniapp` - Open the mini app interface (defaults to your set city).
+
+## 🩺 Monitoring & Healthcheck
+
+The bot runs an internal web server on port `8000` (configurable via `PORT` env var).
+
+- **Healthcheck URL:** `http://<your-app-url>/health`
+- **Uptime Robot:** Point Uptime Robot to this URL to monitor the bot's availability.
 
 ## 🔐 Security & Best Practices
 
 - **Non-root user:** The Docker image runs as a non-privileged user.
 - **Secrets Management:** Environment variables are used for all sensitive data.
 - **Logging:** Structured logging for better observability.
-- **Async I/O:** Efficient handling of network requests.
+- **Async I/O:** Efficient handling of network requests and concurrent web server.
 - **Type Hinting:** Extensive use of Python type hints for maintainability.
 
 ## 📄 License

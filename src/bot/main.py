@@ -1,5 +1,7 @@
 import logging
 import sys
+import asyncio
+from aiohttp import web
 from telegram.ext import ApplicationBuilder, CommandHandler
 from src.config import config
 from src.weather.client import WeatherClient
@@ -13,7 +15,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-def run_bot():
+async def health_check(request):
+    return web.Response(text="OK", status=200)
+
+async def run_bot():
     try:
         config.validate()
     except ValueError as e:
@@ -30,9 +35,28 @@ def run_bot():
     application.add_handler(CommandHandler("weather", handlers.weather_command))
     application.add_handler(CommandHandler("forecast", handlers.forecast_command))
     application.add_handler(CommandHandler("miniapp", handlers.miniapp_command))
+    application.add_handler(CommandHandler("set_city", handlers.set_city_command))
+
+    # Setup healthcheck server
+    app = web.Application()
+    app.router.add_get('/health', health_check)
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', config.PORT)
+
+    logger.info(f"Starting healthcheck server on port {config.PORT}")
+    await site.start()
 
     logger.info("Bot started and polling...")
-    application.run_polling()
+
+    async with application:
+        await application.initialize()
+        await application.start()
+        await application.updater.start_polling()
+
+        # Keep the coroutine running
+        while True:
+            await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    run_bot()
+    asyncio.run(run_bot())
