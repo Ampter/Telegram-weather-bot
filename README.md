@@ -9,7 +9,7 @@ A production-ready Telegram bot that provides real-time weather updates and 3-da
 - **3-Day Forecast:** Detailed 3-day weather outlook.
 - **Mini App Interface:** A simulation of a Telegram Mini App that defaults to your set city.
 - **Healthcheck & Monitoring:** Built-in HTTP server for Uptime Robot or Render health checks.
-- **Async Architecture:** High-performance asynchronous implementation using `python-telegram-bot` and `aiohttp`.
+- **Async Architecture:** High-performance asynchronous implementation using `python-telegram-bot` and `Flask`.
 
 ## 🛠️ Project Structure
 

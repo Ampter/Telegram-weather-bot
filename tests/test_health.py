@@ -1,12 +1,14 @@
 import pytest
-from aiohttp import web
-from src.bot.main import health_check
+from src.bot.web import app
 
-@pytest.mark.asyncio
-async def test_health_check():
-    request = MagicMock()
-    response = await health_check(request)
-    assert response.status == 200
-    assert response.text == "OK"
+def test_health_check():
+    with app.test_client() as client:
+        response = client.get('/health')
+        assert response.status_code == 200
+        assert response.data.decode('utf-8') == "OK"
 
-from unittest.mock import MagicMock
+def test_index_check():
+    with app.test_client() as client:
+        response = client.get('/')
+        assert response.status_code == 200
+        assert "Weather Bot is running" in response.data.decode('utf-8')

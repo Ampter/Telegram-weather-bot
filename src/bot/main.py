@@ -1,12 +1,13 @@
 import logging
 import sys
 import asyncio
-from aiohttp import web
+import threading
 from telegram.ext import ApplicationBuilder, CommandHandler
 from src.config import config
 from src.weather.client import WeatherClient
 from src.miniapp.app import TelegramMiniApp
 from src.bot.handlers import Handlers
+from src.bot.web import run_flask
 
 # Configure logging
 logging.basicConfig(
@@ -14,9 +15,6 @@ logging.basicConfig(
     level=getattr(logging, config.LOG_LEVEL)
 )
 logger = logging.getLogger(__name__)
-
-async def health_check(request):
-    return web.Response(text="OK", status=200)
 
 async def run_bot():
     try:
@@ -37,15 +35,10 @@ async def run_bot():
     application.add_handler(CommandHandler("miniapp", handlers.miniapp_command))
     application.add_handler(CommandHandler("set_city", handlers.set_city_command))
 
-    # Setup healthcheck server
-    app = web.Application()
-    app.router.add_get('/health', health_check)
-    runner = web.AppRunner(app)
-    await runner.setup()
-    site = web.TCPSite(runner, '0.0.0.0', config.PORT)
-
+    # Setup healthcheck server (Flask) in a separate thread
     logger.info(f"Starting healthcheck server on port {config.PORT}")
-    await site.start()
+    flask_thread = threading.Thread(target=run_flask, args=(config.PORT,), daemon=True)
+    flask_thread.start()
 
     logger.info("Bot started and polling...")
 
