@@ -1,16 +1,44 @@
-FROM python:3.10-slim
+# Stage 1: Build
+FROM python:3.10-slim AS builder
 
 WORKDIR /app
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip wheel --no-cache-dir --no-deps --wheel-dir /app/wheels -r requirements.txt
+
+# Stage 2: Runtime
+FROM python:3.10-slim
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/app
+
+# Create a non-root user
+RUN addgroup --system appgroup && adduser --system --group appuser
+
+COPY --from=builder /app/wheels /wheels
+COPY --from=builder /app/requirements.txt .
+
+RUN pip install --no-cache /wheels/*
 
 COPY . .
 
-# Required runtime variables:
-# - TELEGRAM_TOKEN (or TELEGRAM_BOT_TOKEN)
-# - OPENWEATHER_API_KEY
+# Change ownership to non-root user
+RUN chown -R appuser:appgroup /app
+
+USER appuser
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD pgrep -f "python bot.py"
+
 CMD ["python", "bot.py"]
