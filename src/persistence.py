@@ -5,6 +5,7 @@ from telegram.ext import BasePersistence
 
 logger = logging.getLogger(__name__)
 
+
 class TextFilePersistence(BasePersistence):
     """Custom persistence class that stores user cities in a text file: user_id;city"""
 
@@ -30,7 +31,8 @@ class TextFilePersistence(BasePersistence):
                         self.user_data_cache[user_id] = {'city': city}
                     except ValueError:
                         continue
-            logger.info(f"Loaded {len(self.user_data_cache)} users from {self.filepath}")
+            logger.info(
+                f"Loaded {len(self.user_data_cache)} users from {self.filepath}")
         except Exception as e:
             logger.error(f"Error loading persistence file: {e}")
 

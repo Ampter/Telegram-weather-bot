@@ -5,6 +5,7 @@ from src.weather.client import WeatherClient
 
 logger = logging.getLogger(__name__)
 
+
 class Handlers:
     """Class containing all Telegram command handlers."""
 
@@ -36,7 +37,8 @@ class Handlers:
     async def weather_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Fetch and send current weather."""
         logger.info(f"User {update.effective_user.id} triggered /weather")
-        city = " ".join(context.args) if context.args else context.user_data.get('city')
+        city = " ".join(
+            context.args) if context.args else context.user_data.get('city')
 
         if not city:
             await update.message.reply_text("Please provide a city or set a default one with /set_city <city>")
@@ -51,7 +53,8 @@ class Handlers:
     async def forecast_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Fetch and send 3-day forecast."""
         logger.info(f"User {update.effective_user.id} triggered /forecast")
-        city = " ".join(context.args) if context.args else context.user_data.get('city')
+        city = " ".join(
+            context.args) if context.args else context.user_data.get('city')
 
         if not city:
             await update.message.reply_text("Please provide a city or set a default one with /set_city <city>")

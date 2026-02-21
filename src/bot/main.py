@@ -16,6 +16,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+
 def run_bot():
     try:
         config.validate()
@@ -43,13 +44,17 @@ def run_bot():
     )
 
     application.add_handler(CommandHandler("start", handlers.start))
-    application.add_handler(CommandHandler("weather", handlers.weather_command))
-    application.add_handler(CommandHandler("forecast", handlers.forecast_command))
-    application.add_handler(CommandHandler("set_city", handlers.set_city_command))
+    application.add_handler(CommandHandler(
+        "weather", handlers.weather_command))
+    application.add_handler(CommandHandler(
+        "forecast", handlers.forecast_command))
+    application.add_handler(CommandHandler(
+        "set_city", handlers.set_city_command))
 
     # Setup healthcheck server (Flask) in a separate thread
     logger.info(f"Starting healthcheck server on port {config.PORT}")
-    flask_thread = threading.Thread(target=run_flask, args=(config.PORT,), daemon=True)
+    flask_thread = threading.Thread(
+        target=run_flask, args=(config.PORT,), daemon=True)
     flask_thread.start()
 
     logger.info("Bot started and polling...")
@@ -57,6 +62,7 @@ def run_bot():
     # run_polling() handles initialization, starting, and stopping.
     # It also handles signals like SIGINT and SIGTERM gracefully.
     application.run_polling()
+
 
 if __name__ == "__main__":
     run_bot()

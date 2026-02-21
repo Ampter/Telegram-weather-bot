@@ -2,6 +2,7 @@ import pytest
 import os
 from src.persistence import TextFilePersistence
 
+
 @pytest.mark.asyncio
 async def test_text_file_persistence(tmp_path):
     db_file = tmp_path / "users.txt"
@@ -25,11 +26,12 @@ async def test_text_file_persistence(tmp_path):
     loaded_data = await new_persistence.get_user_data()
     assert loaded_data[123]["city"] == "Berlin"
 
+
 @pytest.mark.asyncio
 async def test_text_file_persistence_malformed_lines(tmp_path):
     db_file = tmp_path / "malformed.txt"
     with open(db_file, 'w') as f:
-        f.write("abc;city\n") # invalid id
+        f.write("abc;city\n")  # invalid id
         f.write("456\n")     # no separator
         f.write("789;London\n")
 
