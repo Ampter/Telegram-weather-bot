@@ -3,13 +3,12 @@ import sys
 import asyncio
 import threading
 import os
-from telegram.ext import ApplicationBuilder, CommandHandler
+from telegram.ext import ApplicationBuilder, CommandHandler, PicklePersistence
 from src.config import config
 from src.weather.client import WeatherClient
 from src.miniapp.app import TelegramMiniApp
 from src.bot.handlers import Handlers
 from src.bot.web import run_flask
-from src.database import Database
 
 # Configure logging
 logging.basicConfig(
@@ -25,18 +24,25 @@ async def run_bot():
         logger.error(str(e))
         sys.exit(1)
 
-    # Initialize Database
-    db = Database()
-    db_connected = await db.connect()
-    if not db_connected and os.getenv("ENVIRONMENT") == "production":
-        logger.error("Failed to connect to database in production. Exiting.")
-        sys.exit(1)
+    # Ensure persistence directory exists
+    persistence_dir = os.path.dirname(config.PERSISTENCE_FILE)
+    if persistence_dir and not os.path.exists(persistence_dir):
+        os.makedirs(persistence_dir)
+        logger.info(f"Created persistence directory: {persistence_dir}")
+
+    # Setup Persistence
+    persistence = PicklePersistence(filepath=config.PERSISTENCE_FILE)
 
     weather_client = WeatherClient(config.OPENWEATHER_API_KEY)
-    mini_app = TelegramMiniApp(weather_client, db)
+    mini_app = TelegramMiniApp(weather_client)
     handlers = Handlers(weather_client, mini_app)
 
-    application = ApplicationBuilder().token(config.TELEGRAM_TOKEN).build()
+    application = (
+        ApplicationBuilder()
+        .token(config.TELEGRAM_TOKEN)
+        .persistence(persistence)
+        .build()
+    )
 
     application.add_handler(CommandHandler("start", handlers.start))
     application.add_handler(CommandHandler("weather", handlers.weather_command))
@@ -51,17 +57,14 @@ async def run_bot():
 
     logger.info("Bot started and polling...")
 
-    try:
-        async with application:
-            await application.initialize()
-            await application.start()
-            await application.updater.start_polling()
+    async with application:
+        await application.initialize()
+        await application.start()
+        await application.updater.start_polling()
 
-            # Keep the coroutine running
-            while True:
-                await asyncio.sleep(3600)
-    finally:
-        await db.close()
+        # Keep the coroutine running
+        while True:
+            await asyncio.sleep(3600)
 
 if __name__ == "__main__":
     asyncio.run(run_bot())

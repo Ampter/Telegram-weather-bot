@@ -22,28 +22,31 @@ def update():
     mock.effective_user.id = 123
     return mock
 
+@pytest.fixture
+def context():
+    mock = MagicMock()
+    mock.user_data = {}
+    mock.args = []
+    return mock
+
 @pytest.mark.asyncio
-async def test_start_command(handlers, update):
-    await handlers.start(update, None)
+async def test_start_command(handlers, update, context):
+    await handlers.start(update, context)
     update.message.reply_text.assert_called_once()
     assert "Welcome" in update.message.reply_text.call_args[0][0]
 
 @pytest.mark.asyncio
-async def test_set_city_command(handlers, update, mock_mini_app):
-    context = MagicMock()
+async def test_set_city_command(handlers, update, context, mock_mini_app):
     context.args = ["Kaliningrad"]
-    mock_mini_app.set_user_city = AsyncMock(return_value="Success")
+    mock_mini_app.set_user_city.return_value = "Success"
 
     await handlers.set_city_command(update, context)
-    mock_mini_app.set_user_city.assert_called_once_with(123, "Kaliningrad")
+    mock_mini_app.set_user_city.assert_called_once_with(context.user_data, "Kaliningrad")
     update.message.reply_text.assert_called_once_with("Success")
 
 @pytest.mark.asyncio
-async def test_weather_command_with_default(handlers, update, mock_weather_client, mock_mini_app):
-    context = MagicMock()
-    context.args = []
-    mock_mini_app.get_user_city = AsyncMock(return_value="Kaliningrad")
-
+async def test_weather_command_with_default(handlers, update, context, mock_weather_client, mock_mini_app):
+    mock_mini_app.get_user_city.return_value = "Kaliningrad"
     mock_weather = WeatherData(city="Kaliningrad", description="sunny", temperature=10, feels_like=8)
     mock_weather_client.get_current_weather = AsyncMock(return_value=mock_weather)
 
@@ -51,10 +54,8 @@ async def test_weather_command_with_default(handlers, update, mock_weather_clien
     update.message.reply_text.assert_called_once_with(mock_weather.format())
 
 @pytest.mark.asyncio
-async def test_weather_command_no_default_no_args(handlers, update, mock_mini_app):
-    context = MagicMock()
-    context.args = []
-    mock_mini_app.get_user_city = AsyncMock(return_value=None)
+async def test_weather_command_no_default_no_args(handlers, update, context, mock_mini_app):
+    mock_mini_app.get_user_city.return_value = None
 
     await handlers.weather_command(update, context)
     update.message.reply_text.assert_called_once_with("Please provide a city or set a default one with /set_city <city>")
