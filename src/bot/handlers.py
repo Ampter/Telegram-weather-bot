@@ -16,54 +16,70 @@ class Handlers:
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Send a message when the command /start is issued."""
         await update.message.reply_text(
-            "Welcome to the Weather Bot! Use /weather <city> to get the current weather. "
-            "Use /forecast <city> for a 3-day forecast. Use /miniapp for the mini app interface."
+            "Welcome to the Weather Bot!\n\n"
+            "Commands:\n"
+            "/set_city <city> - Set your default city (e.g., /set_city Kaliningrad)\n"
+            "/weather [city] - Get weather for [city] or your default city\n"
+            "/forecast [city] - Get 3-day forecast\n"
+            "/miniapp - Open the mini app interface"
         )
 
-    async def weather_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Fetch and send current weather for a specific city."""
+    async def set_city_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Set the default city for the user."""
         if not context.args:
-            await update.message.reply_text("Usage: /weather <city>")
+            await update.message.reply_text("Usage: /set_city <city>")
             return
 
         city = " ".join(context.args)
-        weather = await self.weather_client.get_current_weather(city)
+        user_id = update.effective_user.id
+        result = self.mini_app.set_user_city(user_id, city)
+        await update.message.reply_text(result)
 
+    async def weather_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Fetch and send current weather."""
+        user_id = update.effective_user.id
+        city = " ".join(context.args) if context.args else self.mini_app.get_user_city(user_id)
+
+        if not city:
+            await update.message.reply_text("Please provide a city or set a default one with /set_city <city>")
+            return
+
+        weather = await self.weather_client.get_current_weather(city)
         if weather:
             await update.message.reply_text(weather.format())
         else:
             await update.message.reply_text(f"Sorry, I couldn't find weather data for {city}.")
 
     async def forecast_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Fetch and send 3-day forecast for a specific city."""
-        if not context.args:
-            await update.message.reply_text("Usage: /forecast <city>")
+        """Fetch and send 3-day forecast."""
+        user_id = update.effective_user.id
+        city = " ".join(context.args) if context.args else self.mini_app.get_user_city(user_id)
+
+        if not city:
+            await update.message.reply_text("Please provide a city or set a default one with /set_city <city>")
             return
 
-        city = " ".join(context.args)
         forecast = await self.weather_client.get_forecast(city)
-
         if forecast:
             await update.message.reply_text(forecast.format())
         else:
             await update.message.reply_text(f"Sorry, I couldn't find forecast data for {city}.")
 
     async def miniapp_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Simulate a Mini App interface via bot commands."""
+        """Simulate a Mini App interface."""
+        user_id = update.effective_user.id
+
+        # If no arguments, show UI
         if not context.args:
-            await update.message.reply_text(self.mini_app.render_ui())
+            # Auto-fetch weather if default city exists
+            if self.mini_app.get_user_city(user_id):
+                await self.mini_app.fetch_weather(user_id)
+            await update.message.reply_text(self.mini_app.render_ui(user_id))
             return
 
         action = context.args[0]
-        if action == "set_location":
-            if len(context.args) < 2:
-                await update.message.reply_text("Usage: /miniapp set_location <city>")
-                return
-            location = " ".join(context.args[1:])
-            result = self.mini_app.set_location(location)
-            await update.message.reply_text(result)
-        elif action == "fetch_weather":
-            result = await self.mini_app.fetch_weather()
+        if action == "fetch_weather":
+            result = await self.mini_app.fetch_weather(user_id)
             await update.message.reply_text(result)
         else:
-            await update.message.reply_text(self.mini_app.render_ui())
+            await update.message.reply_text(self.mini_app.render_ui(user_id))

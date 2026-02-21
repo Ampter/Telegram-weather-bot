@@ -22,6 +22,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app
 
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Create a non-root user
 RUN addgroup --system appgroup && adduser --system --group appuser
 
@@ -36,9 +40,10 @@ COPY . .
 RUN chown -R appuser:appgroup /app
 
 USER appuser
+EXPOSE 10000
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD pgrep -f "python bot.py"
+  CMD curl -f http://localhost:10000/health
 
 CMD ["python", "bot.py"]
