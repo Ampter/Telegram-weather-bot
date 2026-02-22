@@ -87,7 +87,8 @@ class Handlers:
         logger.debug(f"User {user_id} triggered inline query: {query}")
 
         intent, city_from_query = self._parse_inline_query(query)
-        city = city_from_query if city_from_query else context.user_data.get('city')
+        city = city_from_query if city_from_query else context.user_data.get(
+            'city')
 
         if not city:
             # If no city provided and no default city, we can't show much

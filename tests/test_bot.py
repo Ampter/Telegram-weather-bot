@@ -119,7 +119,8 @@ async def test_inline_query_current_intent_calls_only_current(handlers, mock_wea
     mock_weather = WeatherData(
         city="Berlin", description="cloudy", temperature=15, feels_like=14
     )
-    mock_weather_client.get_current_weather = AsyncMock(return_value=mock_weather)
+    mock_weather_client.get_current_weather = AsyncMock(
+        return_value=mock_weather)
     mock_weather_client.get_forecast = AsyncMock(return_value=None)
 
     await handlers.inline_query(update, context)
@@ -138,7 +139,8 @@ async def test_inline_query_forecast_intent_calls_only_forecast(handlers, mock_w
     context.user_data = {}
 
     mock_weather_client.get_current_weather = AsyncMock(return_value=None)
-    mock_weather_client.get_forecast = AsyncMock(return_value=MagicMock(format=lambda: "x"))
+    mock_weather_client.get_forecast = AsyncMock(
+        return_value=MagicMock(format=lambda: "x"))
 
     await handlers.inline_query(update, context)
 
@@ -158,7 +160,8 @@ async def test_inline_query_ambiguous_intent_calls_both(handlers, mock_weather_c
     mock_weather = WeatherData(
         city="Berlin", description="cloudy", temperature=15, feels_like=14
     )
-    mock_weather_client.get_current_weather = AsyncMock(return_value=mock_weather)
+    mock_weather_client.get_current_weather = AsyncMock(
+        return_value=mock_weather)
     mock_weather_client.get_forecast = AsyncMock(return_value=None)
 
     await handlers.inline_query(update, context)
