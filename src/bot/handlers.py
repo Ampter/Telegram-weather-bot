@@ -7,6 +7,10 @@ from src.weather.client import WeatherClient
 
 logger = logging.getLogger(__name__)
 
+INLINE_FORECAST_KEYWORDS = {"forecast", "fc"}
+INLINE_CURRENT_KEYWORDS = {"weather", "current", "now"}
+INLINE_CONNECTOR_WORDS = {"for", "in", "at"}
+
 
 class Handlers:
     """Class containing all Telegram command handlers."""
@@ -82,7 +86,9 @@ class Handlers:
         user_id = update.effective_user.id
         logger.debug(f"User {user_id} triggered inline query: {query}")
 
-        city = query.strip() if query.strip() else context.user_data.get('city')
+        intent, city_from_query = self._parse_inline_query(query)
+        city = city_from_query if city_from_query else context.user_data.get(
+            'city')
 
         if not city:
             # If no city provided and no default city, we can't show much
@@ -90,11 +96,19 @@ class Handlers:
 
         results = []
 
-        # Fetch weather and forecast concurrently
-        weather, forecast = await asyncio.gather(
-            self.weather_client.get_current_weather(city),
-            self.weather_client.get_forecast(city)
-        )
+        weather = None
+        forecast = None
+
+        if intent == "current":
+            weather = await self.weather_client.get_current_weather(city)
+        elif intent == "forecast":
+            forecast = await self.weather_client.get_forecast(city)
+        else:
+            # Ambiguous intent: fetch both cards concurrently.
+            weather, forecast = await asyncio.gather(
+                self.weather_client.get_current_weather(city),
+                self.weather_client.get_forecast(city)
+            )
 
         if weather:
             results.append(
@@ -119,3 +133,36 @@ class Handlers:
             )
 
         await update.inline_query.answer(results, cache_time=300)
+
+    @staticmethod
+    def _parse_inline_query(query: str):
+        """Return (intent, city) where intent is current, forecast, or ambiguous."""
+        normalized_query = query.strip()
+        if not normalized_query:
+            return "ambiguous", ""
+
+        words = normalized_query.split()
+        lowered_words = [word.lower() for word in words]
+
+        has_forecast_intent = any(
+            word in INLINE_FORECAST_KEYWORDS for word in lowered_words
+        )
+        has_current_intent = any(
+            word in INLINE_CURRENT_KEYWORDS for word in lowered_words
+        )
+
+        if has_forecast_intent and not has_current_intent:
+            intent = "forecast"
+        elif has_current_intent and not has_forecast_intent:
+            intent = "current"
+        else:
+            intent = "ambiguous"
+
+        city_words = [
+            original_word for original_word, lowered_word in zip(words, lowered_words)
+            if lowered_word not in INLINE_FORECAST_KEYWORDS
+            and lowered_word not in INLINE_CURRENT_KEYWORDS
+            and lowered_word not in INLINE_CONNECTOR_WORDS
+        ]
+        city = " ".join(city_words).strip()
+        return intent, city
