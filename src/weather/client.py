@@ -5,6 +5,7 @@ from .models import WeatherData, ForecastData, ForecastEntry
 
 logger = logging.getLogger(__name__)
 
+
 class WeatherClient:
     def __init__(self, api_key: str):
         self.api_key = api_key
@@ -29,7 +30,8 @@ class WeatherClient:
                         feels_like=data["main"]["feels_like"]
                     )
                 else:
-                    logger.error(f"Error fetching weather for {city}: {response.status_code} {response.text}")
+                    logger.error(
+                        f"Error fetching weather for {city}: {response.status_code} {response.text}")
                     return None
         except Exception as e:
             logger.exception(f"Unexpected error fetching weather for {city}")
@@ -66,7 +68,8 @@ class WeatherClient:
 
                     return ForecastData(city=city, entries=list(captured.values()))
                 else:
-                    logger.error(f"Error fetching forecast for {city}: {response.status_code} {response.text}")
+                    logger.error(
+                        f"Error fetching forecast for {city}: {response.status_code} {response.text}")
                     return None
         except Exception as e:
             logger.exception(f"Unexpected error fetching forecast for {city}")
