@@ -78,6 +78,7 @@ def run_bot():
         ApplicationBuilder()
         .token(config.TELEGRAM_TOKEN)
         .persistence(persistence)
+        .post_shutdown(weather_client.aclose)
         .build()
     )
 
