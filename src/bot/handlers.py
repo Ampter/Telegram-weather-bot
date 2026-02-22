@@ -1,5 +1,7 @@
 import logging
-from telegram import Update
+import uuid
+import asyncio
+from telegram import Update, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import ContextTypes
 from src.weather.client import WeatherClient
 
@@ -73,3 +75,47 @@ class Handlers:
         else:
             await update.effective_message.reply_text(f"Sorry, I couldn't find forecast data for {city}.")
         logger.debug(f"/forecast handled for user {user_id} and city {city}")
+
+    async def inline_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle inline queries."""
+        query = update.inline_query.query
+        user_id = update.effective_user.id
+        logger.debug(f"User {user_id} triggered inline query: {query}")
+
+        city = query.strip() if query.strip() else context.user_data.get('city')
+
+        if not city:
+            # If no city provided and no default city, we can't show much
+            return
+
+        results = []
+
+        # Fetch weather and forecast concurrently
+        weather, forecast = await asyncio.gather(
+            self.weather_client.get_current_weather(city),
+            self.weather_client.get_forecast(city)
+        )
+
+        if weather:
+            results.append(
+                InlineQueryResultArticle(
+                    id=str(uuid.uuid4()),
+                    title=f"Current Weather in {city}",
+                    input_message_content=InputTextMessageContent(
+                        weather.format()),
+                    description=f"Temperature: {weather.temperature}°C, {weather.description}"
+                )
+            )
+
+        if forecast:
+            results.append(
+                InlineQueryResultArticle(
+                    id=str(uuid.uuid4()),
+                    title=f"3-Day Forecast for {city}",
+                    input_message_content=InputTextMessageContent(
+                        forecast.format()),
+                    description="View the 3-day weather outlook"
+                )
+            )
+
+        await update.inline_query.answer(results, cache_time=300)

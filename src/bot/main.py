@@ -4,7 +4,7 @@ import sys
 import os
 import threading
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, InlineQueryHandler
 from src.config import config
 from src.weather.client import WeatherClient
 from src.bot.handlers import Handlers
@@ -88,6 +88,7 @@ def run_bot():
         "forecast", handlers.forecast_command))
     application.add_handler(CommandHandler(
         "set_city", handlers.set_city_command))
+    application.add_handler(InlineQueryHandler(handlers.inline_query))
 
     # Register the error handler
     application.add_error_handler(error_handler)

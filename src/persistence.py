@@ -1,5 +1,6 @@
 import os
 import logging
+import threading
 from typing import Dict, Any, Optional
 from telegram.ext import BasePersistence
 
@@ -13,6 +14,7 @@ class TextFilePersistence(BasePersistence):
         super().__init__()
         self.filepath = filepath
         self.user_data_cache: Dict[int, Dict[str, Any]] = {}
+        self._lock = threading.Lock()
         self._load()
 
     def _load(self):
@@ -40,18 +42,22 @@ class TextFilePersistence(BasePersistence):
 
     def _save(self):
         logger.debug(f"Saving persistence to {self.filepath}")
-        try:
-            persistence_dir = os.path.dirname(self.filepath)
-            if persistence_dir:
-                os.makedirs(persistence_dir, exist_ok=True)
-            with open(self.filepath, 'w') as f:
-                for user_id, data in self.user_data_cache.items():
-                    city = data.get('city')
-                    if city:
-                        f.write(f"{user_id};{city}\n")
-            logger.info(f"Successfully saved persistence to {self.filepath}")
-        except Exception as e:
-            logger.error(f"Error saving persistence file {self.filepath}: {e}")
+        with self._lock:
+            try:
+                persistence_dir = os.path.dirname(self.filepath)
+                if persistence_dir:
+                    os.makedirs(persistence_dir, exist_ok=True)
+                with open(self.filepath, 'w') as f:
+                    # Use list(items()) to avoid RuntimeError during iteration if modified
+                    for user_id, data in list(self.user_data_cache.items()):
+                        city = data.get('city')
+                        if city:
+                            f.write(f"{user_id};{city}\n")
+                logger.info(
+                    f"Successfully saved persistence to {self.filepath}")
+            except Exception as e:
+                logger.error(
+                    f"Error saving persistence file {self.filepath}: {e}")
 
     async def get_user_data(self) -> Dict[int, Dict[Any, Any]]:
         logger.debug("Getting user data from persistence")
@@ -77,7 +83,7 @@ class TextFilePersistence(BasePersistence):
     async def get_callback_data(self) -> Optional[Dict[Any, Any]]:
         return None
 
-    async def update_callback_data(self, data: Dict[Any, Any]) -> None:
+    async def update_callback_data(self, data: Any) -> None:
         pass
 
     async def get_conversations(self, name: str) -> Dict[Any, Any]:
@@ -98,11 +104,11 @@ class TextFilePersistence(BasePersistence):
             del self.user_data_cache[user_id]
             self._save()
 
-    async def refresh_bot_data(self, data: Dict[str, Any]) -> None:
+    async def refresh_bot_data(self, bot_data: Dict[str, Any]) -> None:
         pass
 
-    async def refresh_chat_data(self, chat_id: int, data: Dict[str, Any]) -> None:
+    async def refresh_chat_data(self, chat_id: int, chat_data: Dict[str, Any]) -> None:
         pass
 
-    async def refresh_user_data(self, user_id: int, data: Dict[str, Any]) -> None:
+    async def refresh_user_data(self, user_id: int, user_data: Dict[str, Any]) -> None:
         pass
