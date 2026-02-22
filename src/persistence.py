@@ -53,37 +53,35 @@ class TextFilePersistence(BasePersistence):
                         city = data.get('city')
                         if city:
                             f.write(f"{user_id};{city}\n")
-                logger.info(
-                    f"Successfully saved persistence to {self.filepath}")
+                logger.info(f"Successfully saved persistence to {self.filepath}")
             except Exception as e:
-                logger.error(
-                    f"Error saving persistence file {self.filepath}: {e}")
+                logger.error(f"Error saving persistence file {self.filepath}: {e}")
 
     async def get_user_data(self) -> Dict[int, Dict[Any, Any]]:
         logger.debug("Getting user data from persistence")
         return self.user_data_cache.copy()
 
-    async def update_user_data(self, user_id: int, user_data: Dict[Any, Any]) -> None:
+    async def update_user_data(self, user_id: int, data: Dict[Any, Any]) -> None:
         logger.debug(f"Updating user data for {user_id}")
-        self.user_data_cache[user_id] = user_data
+        self.user_data_cache[user_id] = data
         self._save()
 
     async def get_chat_data(self) -> Dict[int, Dict[Any, Any]]:
         return {}
 
-    async def update_chat_data(self, chat_id: int, chat_data: Dict[Any, Any]) -> None:
+    async def update_chat_data(self, chat_id: int, data: Dict[Any, Any]) -> None:
         pass
 
     async def get_bot_data(self) -> Dict[Any, Any]:
         return {}
 
-    async def update_bot_data(self, bot_data: Dict[Any, Any]) -> None:
+    async def update_bot_data(self, data: Dict[Any, Any]) -> None:
         pass
 
     async def get_callback_data(self) -> Optional[Dict[Any, Any]]:
         return None
 
-    async def update_callback_data(self, callback_data: Any) -> None:
+    async def update_callback_data(self, data: Any) -> None:
         pass
 
     async def get_conversations(self, name: str) -> Dict[Any, Any]:

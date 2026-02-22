@@ -4,7 +4,7 @@ import sys
 import os
 import threading
 from telegram import Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes, InlineQueryHandler
 from src.config import config
 from src.weather.client import WeatherClient
 from src.bot.handlers import Handlers
@@ -46,13 +46,12 @@ logger = logging.getLogger(__name__)
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log the error and send a telegram message to notify the user."""
-    error_msg = f"{type(context.error).__name__}: {str(context.error)}"
-    logger.error(msg=f"Exception while handling an update: {error_msg}",
+    logger.error(msg="Exception while handling an update:",
                  exc_info=context.error)
 
     if isinstance(update, Update) and update.effective_message:
         await update.effective_message.reply_text(
-            f"An unexpected error occurred: {error_msg}\nPlease try again later."
+            "An unexpected error occurred. Please try again later."
         )
 
 
@@ -89,8 +88,7 @@ def run_bot():
         "forecast", handlers.forecast_command))
     application.add_handler(CommandHandler(
         "set_city", handlers.set_city_command))
-    application.add_handler(CommandHandler(
-        "miniapp", handlers.miniapp_command))
+    application.add_handler(InlineQueryHandler(handlers.inline_query))
 
     # Register the error handler
     application.add_error_handler(error_handler)

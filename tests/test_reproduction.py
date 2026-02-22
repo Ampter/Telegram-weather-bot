@@ -4,21 +4,19 @@ import asyncio
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from src.persistence import TextFilePersistence
 
-
 @pytest.mark.asyncio
 async def test_persistence_integration_with_keywords():
     """Test that persistence methods can be called with keyword arguments, as PTB might do."""
     persistence = TextFilePersistence("test_data.txt")
 
-    # Test update_user_data with keyword arguments
-    await persistence.update_user_data(user_id=123, user_data={'city': 'Berlin'})
+    # Test update_user_data with keyword arguments ('data' is what PTB uses)
+    await persistence.update_user_data(user_id=123, data={'city': 'Berlin'})
     user_data = await persistence.get_user_data()
     assert user_data[123] == {'city': 'Berlin'}
 
     # Clean up
     if os.path.exists("test_data.txt"):
         os.remove("test_data.txt")
-
 
 @pytest.mark.asyncio
 async def test_persistence_integration(tmp_path):
@@ -28,7 +26,7 @@ async def test_persistence_integration(tmp_path):
     # PTB v20+ Application with persistence
     application = (
         ApplicationBuilder()
-        .token("123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11")  # fake token
+        .token("123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11") # fake token
         .persistence(persistence)
         .build()
     )

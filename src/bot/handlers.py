@@ -1,5 +1,7 @@
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
+import uuid
+import asyncio
+from telegram import Update, InlineQueryResultArticle, InputTextMessageContent
 from telegram.ext import ContextTypes
 from src.weather.client import WeatherClient
 
@@ -21,8 +23,7 @@ class Handlers:
             "Commands:\n"
             "/set_city <city> - Set your default city (e.g., /set_city Kaliningrad)\n"
             "/weather [city] - Get weather for [city] or your default city\n"
-            "/forecast [city] - Get 3-day forecast\n"
-            "/miniapp - Open the weather mini app"
+            "/forecast [city] - Get 3-day forecast"
         )
         logger.debug(f"/start handled for user {user_id}")
 
@@ -75,26 +76,44 @@ class Handlers:
             await update.effective_message.reply_text(f"Sorry, I couldn't find forecast data for {city}.")
         logger.debug(f"/forecast handled for user {user_id} and city {city}")
 
-    async def miniapp_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Send a message with a button to open the Mini App."""
-        user_id = update.effective_user.id if update.effective_user else "Unknown"
-        logger.debug(f"User {user_id} triggered /miniapp")
+    async def inline_query(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle inline queries."""
+        query = update.inline_query.query
+        user_id = update.effective_user.id
+        logger.debug(f"User {user_id} triggered inline query: {query}")
 
-        # Use a placeholder URL for demonstration
-        url = "https://example.com"
+        city = query.strip() if query.strip() else context.user_data.get('city')
 
-        keyboard = [
-            [
-                InlineKeyboardButton(
-                    "Open Weather App",
-                    web_app=WebAppInfo(url=url)
-                )
-            ]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
+        if not city:
+            # If no city provided and no default city, we can't show much
+            return
 
-        await update.effective_message.reply_text(
-            "Click the button below to open the Weather Mini App (Demonstration):",
-            reply_markup=reply_markup
+        results = []
+
+        # Fetch weather and forecast concurrently
+        weather, forecast = await asyncio.gather(
+            self.weather_client.get_current_weather(city),
+            self.weather_client.get_forecast(city)
         )
-        logger.debug(f"/miniapp handled for user {user_id}")
+
+        if weather:
+            results.append(
+                InlineQueryResultArticle(
+                    id=str(uuid.uuid4()),
+                    title=f"Current Weather in {city}",
+                    input_message_content=InputTextMessageContent(weather.format()),
+                    description=f"Temperature: {weather.temperature}°C, {weather.description}"
+                )
+            )
+
+        if forecast:
+            results.append(
+                InlineQueryResultArticle(
+                    id=str(uuid.uuid4()),
+                    title=f"3-Day Forecast for {city}",
+                    input_message_content=InputTextMessageContent(forecast.format()),
+                    description="View the 3-day weather outlook"
+                )
+            )
+
+        await update.inline_query.answer(results, cache_time=300)

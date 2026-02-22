@@ -7,7 +7,7 @@ A production-ready Telegram bot that provides real-time weather updates and 3-da
 - **Default City:** Set your home city with `/set_city` for quick access.
 - **Current Weather:** Get instant weather reports for any city or your default location.
 - **3-Day Forecast:** Detailed 3-day weather outlook.
-- **Mini App Interface:** A simulation of a Telegram Mini App that defaults to your set city.
+- **Inline Mode:** Get weather and forecasts in any chat by typing `@botname [city]`.
 - **Healthcheck & Monitoring:** Built-in HTTP server for Uptime Robot or Render health checks.
 - **Async Architecture:** High-performance asynchronous implementation using `python-telegram-bot` and `Flask`.
 
@@ -17,7 +17,6 @@ A production-ready Telegram bot that provides real-time weather updates and 3-da
 ├── src/
 │   ├── bot/          # Telegram bot logic, handlers, and health server
 │   ├── weather/      # OpenWeather API client and models
-│   ├── miniapp/      # Mini app business logic and user preferences
 │   └── config.py     # Configuration and environment management
 ├── tests/            # Test suite
 ├── Dockerfile        # Multi-stage production Docker image
@@ -91,7 +90,7 @@ Once the bot is running, send the following commands:
 - `/set_city <city>` - Set your default city (e.g., `/set_city Kaliningrad`).
 - `/weather [city]` - Get current weather. If no city is provided, uses your default city.
 - `/forecast [city]` - Get 3-day forecast.
-- `/miniapp` - Open the mini app interface (defaults to your set city).
+- `@botname [city]` - Inline mode to get weather or forecast in any chat.
 
 ## 🩺 Monitoring & Healthcheck
 

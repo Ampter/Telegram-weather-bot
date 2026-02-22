@@ -80,5 +80,28 @@ async def test_error_handler():
     await error_handler(update, context)
 
     update.effective_message.reply_text.assert_called_once_with(
-        "An unexpected error occurred: Exception: Test error\nPlease try again later."
+        "An unexpected error occurred. Please try again later."
     )
+
+
+@pytest.mark.asyncio
+async def test_inline_query(handlers, mock_weather_client):
+    update = MagicMock()
+    update.inline_query.query = "Berlin"
+    update.inline_query.answer = AsyncMock()
+    update.effective_user.id = 123
+    context = MagicMock()
+    context.user_data = {}
+
+    mock_weather = WeatherData(
+        city="Berlin", description="cloudy", temperature=15, feels_like=14)
+    mock_weather_client.get_current_weather = AsyncMock(
+        return_value=mock_weather)
+    mock_weather_client.get_forecast = AsyncMock(return_value=None)
+
+    await handlers.inline_query(update, context)
+
+    update.inline_query.answer.assert_called_once()
+    results = update.inline_query.answer.call_args[0][0]
+    assert len(results) > 0
+    assert "Berlin" in results[0].title
