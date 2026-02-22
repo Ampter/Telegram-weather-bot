@@ -32,7 +32,8 @@ class WeatherClient:
                     feels_like=data["main"]["feels_like"]
                 )
             else:
-                logger.error(f"Error fetching weather for {city}: {response.status_code} {response.text}")
+                logger.error(
+                    f"Error fetching weather for {city}: {response.status_code} {response.text}")
                 return None
         except Exception:
             logger.exception(f"Unexpected error fetching weather for {city}")
@@ -66,7 +67,8 @@ class WeatherClient:
 
                 return ForecastData(city=city, entries=entries[:days])
             else:
-                logger.error(f"Error fetching forecast for {city}: {response.status_code} {response.text}")
+                logger.error(
+                    f"Error fetching forecast for {city}: {response.status_code} {response.text}")
                 return None
         except Exception:
             logger.exception(f"Unexpected error fetching forecast for {city}")
