@@ -1,5 +1,5 @@
 import logging
-from telegram import Update
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
 from telegram.ext import ContextTypes
 from src.weather.client import WeatherClient
 
@@ -21,7 +21,8 @@ class Handlers:
             "Commands:\n"
             "/set_city <city> - Set your default city (e.g., /set_city Kaliningrad)\n"
             "/weather [city] - Get weather for [city] or your default city\n"
-            "/forecast [city] - Get 3-day forecast"
+            "/forecast [city] - Get 3-day forecast\n"
+            "/miniapp - Open the weather mini app"
         )
         logger.debug(f"/start handled for user {user_id}")
 
@@ -73,3 +74,27 @@ class Handlers:
         else:
             await update.effective_message.reply_text(f"Sorry, I couldn't find forecast data for {city}.")
         logger.debug(f"/forecast handled for user {user_id} and city {city}")
+
+    async def miniapp_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Send a message with a button to open the Mini App."""
+        user_id = update.effective_user.id if update.effective_user else "Unknown"
+        logger.debug(f"User {user_id} triggered /miniapp")
+
+        # Use a placeholder URL for demonstration
+        url = "https://example.com"
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    "Open Weather App",
+                    web_app=WebAppInfo(url=url)
+                )
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        await update.effective_message.reply_text(
+            "Click the button below to open the Weather Mini App (Demonstration):",
+            reply_markup=reply_markup
+        )
+        logger.debug(f"/miniapp handled for user {user_id}")

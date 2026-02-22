@@ -80,5 +80,5 @@ async def test_error_handler():
     await error_handler(update, context)
 
     update.effective_message.reply_text.assert_called_once_with(
-        "An unexpected error occurred. Please try again later."
+        "An unexpected error occurred: Exception: Test error\nPlease try again later."
     )

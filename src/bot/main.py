@@ -46,12 +46,13 @@ logger = logging.getLogger(__name__)
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log the error and send a telegram message to notify the user."""
-    logger.error(msg="Exception while handling an update:",
+    error_msg = f"{type(context.error).__name__}: {str(context.error)}"
+    logger.error(msg=f"Exception while handling an update: {error_msg}",
                  exc_info=context.error)
 
     if isinstance(update, Update) and update.effective_message:
         await update.effective_message.reply_text(
-            "An unexpected error occurred. Please try again later."
+            f"An unexpected error occurred: {error_msg}\nPlease try again later."
         )
 
 
@@ -88,6 +89,8 @@ def run_bot():
         "forecast", handlers.forecast_command))
     application.add_handler(CommandHandler(
         "set_city", handlers.set_city_command))
+    application.add_handler(CommandHandler(
+        "miniapp", handlers.miniapp_command))
 
     # Register the error handler
     application.add_error_handler(error_handler)
