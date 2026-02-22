@@ -1,12 +1,10 @@
 import logging
 import sys
-import asyncio
-import threading
 import os
+import threading
 from telegram.ext import ApplicationBuilder, CommandHandler
 from src.config import config
 from src.weather.client import WeatherClient
-from src.miniapp.app import TelegramMiniApp
 from src.bot.handlers import Handlers
 from src.bot.web import run_flask
 from src.persistence import TextFilePersistence
@@ -18,7 +16,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-async def run_bot():
+
+def run_bot():
     try:
         config.validate()
     except ValueError as e:
@@ -35,8 +34,7 @@ async def run_bot():
     persistence = TextFilePersistence(filepath=config.PERSISTENCE_FILE)
 
     weather_client = WeatherClient(config.OPENWEATHER_API_KEY)
-    mini_app = TelegramMiniApp(weather_client)
-    handlers = Handlers(weather_client, mini_app)
+    handlers = Handlers(weather_client)
 
     application = (
         ApplicationBuilder()
@@ -46,26 +44,25 @@ async def run_bot():
     )
 
     application.add_handler(CommandHandler("start", handlers.start))
-    application.add_handler(CommandHandler("weather", handlers.weather_command))
-    application.add_handler(CommandHandler("forecast", handlers.forecast_command))
-    application.add_handler(CommandHandler("miniapp", handlers.miniapp_command))
-    application.add_handler(CommandHandler("set_city", handlers.set_city_command))
+    application.add_handler(CommandHandler(
+        "weather", handlers.weather_command))
+    application.add_handler(CommandHandler(
+        "forecast", handlers.forecast_command))
+    application.add_handler(CommandHandler(
+        "set_city", handlers.set_city_command))
 
     # Setup healthcheck server (Flask) in a separate thread
     logger.info(f"Starting healthcheck server on port {config.PORT}")
-    flask_thread = threading.Thread(target=run_flask, args=(config.PORT,), daemon=True)
+    flask_thread = threading.Thread(
+        target=run_flask, args=(config.PORT,), daemon=True)
     flask_thread.start()
 
     logger.info("Bot started and polling...")
 
-    async with application:
-        await application.initialize()
-        await application.start()
-        await application.updater.start_polling()
+    # run_polling() handles initialization, starting, and stopping.
+    # It also handles signals like SIGINT and SIGTERM gracefully.
+    application.run_polling()
 
-        # Keep the coroutine running
-        while True:
-            await asyncio.sleep(3600)
 
 if __name__ == "__main__":
-    asyncio.run(run_bot())
+    run_bot()
