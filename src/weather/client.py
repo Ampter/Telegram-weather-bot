@@ -52,8 +52,8 @@ class WeatherClient:
                 data = response.json()
                 forecast_list = data.get("list", [])
 
-                    captured = {}
-                    for entry in forecast_list:
+                  captured = {}
+                   for entry in forecast_list:
                         date = entry["dt_txt"][:10]
                         if date in captured:
                             continue
