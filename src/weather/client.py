@@ -1,10 +1,10 @@
 import httpx
 import logging
 from typing import Optional
-from itertools import groupby
 from .models import WeatherData, ForecastData, ForecastEntry
 
 logger = logging.getLogger(__name__)
+
 
 class WeatherClient:
     def __init__(self, api_key: str):
