@@ -17,7 +17,8 @@ def handlers(mock_weather_client):
 @pytest.fixture
 def update():
     mock = MagicMock()
-    mock.message.reply_text = AsyncMock()
+    mock.effective_message.reply_text = AsyncMock()
+    mock.message = mock.effective_message
     mock.effective_user.id = 123
     return mock
 
@@ -33,8 +34,8 @@ def context():
 @pytest.mark.asyncio
 async def test_start_command(handlers, update, context):
     await handlers.start(update, context)
-    update.message.reply_text.assert_called_once()
-    assert "Welcome" in update.message.reply_text.call_args[0][0]
+    update.effective_message.reply_text.assert_called_once()
+    assert "Welcome" in update.effective_message.reply_text.call_args[0][0]
 
 
 @pytest.mark.asyncio
@@ -43,7 +44,7 @@ async def test_set_city_command(handlers, update, context):
 
     await handlers.set_city_command(update, context)
     assert context.user_data['city'] == "Kaliningrad"
-    update.message.reply_text.assert_called_once_with(
+    update.effective_message.reply_text.assert_called_once_with(
         "Default city set to: Kaliningrad")
 
 
@@ -56,11 +57,28 @@ async def test_weather_command_with_default(handlers, update, context, mock_weat
         return_value=mock_weather)
 
     await handlers.weather_command(update, context)
-    update.message.reply_text.assert_called_once_with(mock_weather.format())
+    update.effective_message.reply_text.assert_called_once_with(
+        mock_weather.format())
 
 
 @pytest.mark.asyncio
 async def test_weather_command_no_default_no_args(handlers, update, context):
     await handlers.weather_command(update, context)
-    update.message.reply_text.assert_called_once_with(
+    update.effective_message.reply_text.assert_called_once_with(
         "Please provide a city or set a default one with /set_city <city>")
+
+
+@pytest.mark.asyncio
+async def test_error_handler():
+    from src.bot.main import error_handler
+    from telegram import Update
+    update = MagicMock(spec=Update)
+    update.effective_message.reply_text = AsyncMock()
+    context = MagicMock()
+    context.error = Exception("Test error")
+
+    await error_handler(update, context)
+
+    update.effective_message.reply_text.assert_called_once_with(
+        "An unexpected error occurred. Please try again later."
+    )
