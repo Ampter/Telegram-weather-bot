@@ -12,6 +12,7 @@ class Config:
     PORT: int = int(os.getenv("PORT", "10000"))
     # The custom text database file
     PERSISTENCE_FILE: str = os.getenv("PERSISTENCE_FILE", "data/users.txt")
+    LOG_FILE: str = os.getenv("LOG_FILE", "logs/bot.log")
 
     def validate(self):
         missing = []

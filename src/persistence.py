@@ -17,8 +17,10 @@ class TextFilePersistence(BasePersistence):
 
     def _load(self):
         if not os.path.exists(self.filepath):
+            logger.info(f"Persistence file not found: {self.filepath}")
             return
 
+        logger.info(f"Loading persistence from {self.filepath}")
         try:
             with open(self.filepath, 'r') as f:
                 for line in f:
@@ -37,15 +39,19 @@ class TextFilePersistence(BasePersistence):
             logger.error(f"Error loading persistence file: {e}")
 
     def _save(self):
+        logger.debug(f"Saving persistence to {self.filepath}")
         try:
-            os.makedirs(os.path.dirname(self.filepath), exist_ok=True)
+            persistence_dir = os.path.dirname(self.filepath)
+            if persistence_dir:
+                os.makedirs(persistence_dir, exist_ok=True)
             with open(self.filepath, 'w') as f:
                 for user_id, data in self.user_data_cache.items():
                     city = data.get('city')
                     if city:
                         f.write(f"{user_id};{city}\n")
+            logger.info(f"Successfully saved persistence to {self.filepath}")
         except Exception as e:
-            logger.error(f"Error saving persistence file: {e}")
+            logger.error(f"Error saving persistence file {self.filepath}: {e}")
 
     async def get_user_data(self) -> Dict[int, Dict[Any, Any]]:
         logger.debug("Getting user data from persistence")
