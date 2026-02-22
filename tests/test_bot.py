@@ -105,3 +105,63 @@ async def test_inline_query(handlers, mock_weather_client):
     results = update.inline_query.answer.call_args[0][0]
     assert len(results) > 0
     assert "Berlin" in results[0].title
+
+
+@pytest.mark.asyncio
+async def test_inline_query_current_intent_calls_only_current(handlers, mock_weather_client):
+    update = MagicMock()
+    update.inline_query.query = "weather Berlin"
+    update.inline_query.answer = AsyncMock()
+    update.effective_user.id = 123
+    context = MagicMock()
+    context.user_data = {}
+
+    mock_weather = WeatherData(
+        city="Berlin", description="cloudy", temperature=15, feels_like=14
+    )
+    mock_weather_client.get_current_weather = AsyncMock(return_value=mock_weather)
+    mock_weather_client.get_forecast = AsyncMock(return_value=None)
+
+    await handlers.inline_query(update, context)
+
+    mock_weather_client.get_current_weather.assert_awaited_once_with("Berlin")
+    mock_weather_client.get_forecast.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_inline_query_forecast_intent_calls_only_forecast(handlers, mock_weather_client):
+    update = MagicMock()
+    update.inline_query.query = "forecast Berlin"
+    update.inline_query.answer = AsyncMock()
+    update.effective_user.id = 123
+    context = MagicMock()
+    context.user_data = {}
+
+    mock_weather_client.get_current_weather = AsyncMock(return_value=None)
+    mock_weather_client.get_forecast = AsyncMock(return_value=MagicMock(format=lambda: "x"))
+
+    await handlers.inline_query(update, context)
+
+    mock_weather_client.get_forecast.assert_awaited_once_with("Berlin")
+    mock_weather_client.get_current_weather.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_inline_query_ambiguous_intent_calls_both(handlers, mock_weather_client):
+    update = MagicMock()
+    update.inline_query.query = "Berlin"
+    update.inline_query.answer = AsyncMock()
+    update.effective_user.id = 123
+    context = MagicMock()
+    context.user_data = {}
+
+    mock_weather = WeatherData(
+        city="Berlin", description="cloudy", temperature=15, feels_like=14
+    )
+    mock_weather_client.get_current_weather = AsyncMock(return_value=mock_weather)
+    mock_weather_client.get_forecast = AsyncMock(return_value=None)
+
+    await handlers.inline_query(update, context)
+
+    mock_weather_client.get_current_weather.assert_awaited_once_with("Berlin")
+    mock_weather_client.get_forecast.assert_awaited_once_with("Berlin")
