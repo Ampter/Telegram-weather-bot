@@ -101,8 +101,7 @@ class Handlers:
                 InlineQueryResultArticle(
                     id=str(uuid.uuid4()),
                     title=f"Current Weather in {city}",
-                    input_message_content=InputTextMessageContent(
-                        weather.format()),
+                    input_message_content=InputTextMessageContent(weather.format()),
                     description=f"Temperature: {weather.temperature}°C, {weather.description}"
                 )
             )
@@ -112,8 +111,7 @@ class Handlers:
                 InlineQueryResultArticle(
                     id=str(uuid.uuid4()),
                     title=f"3-Day Forecast for {city}",
-                    input_message_content=InputTextMessageContent(
-                        forecast.format()),
+                    input_message_content=InputTextMessageContent(forecast.format()),
                     description="View the 3-day weather outlook"
                 )
             )
