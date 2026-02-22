@@ -1,4 +1,5 @@
 import logging
+import asyncio
 import logging.handlers
 import sys
 import os
@@ -103,7 +104,10 @@ def run_bot():
 
     # run_polling() handles initialization, starting, and stopping.
     # It also handles signals like SIGINT and SIGTERM gracefully.
-    application.run_polling()
+    try:
+        application.run_polling()
+    finally:
+        asyncio.run(weather_client.aclose())
 
 
 if __name__ == "__main__":
