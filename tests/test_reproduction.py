@@ -4,6 +4,7 @@ import asyncio
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler
 from src.persistence import TextFilePersistence
 
+
 @pytest.mark.asyncio
 async def test_persistence_integration_with_keywords():
     """Test that persistence methods can be called with keyword arguments, as PTB might do."""
@@ -18,6 +19,7 @@ async def test_persistence_integration_with_keywords():
     if os.path.exists("test_data.txt"):
         os.remove("test_data.txt")
 
+
 @pytest.mark.asyncio
 async def test_persistence_integration(tmp_path):
     db_file = tmp_path / "users.txt"
@@ -26,7 +28,7 @@ async def test_persistence_integration(tmp_path):
     # PTB v20+ Application with persistence
     application = (
         ApplicationBuilder()
-        .token("123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11") # fake token
+        .token("123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11")  # fake token
         .persistence(persistence)
         .build()
     )

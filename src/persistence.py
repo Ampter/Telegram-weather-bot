@@ -53,9 +53,11 @@ class TextFilePersistence(BasePersistence):
                         city = data.get('city')
                         if city:
                             f.write(f"{user_id};{city}\n")
-                logger.info(f"Successfully saved persistence to {self.filepath}")
+                logger.info(
+                    f"Successfully saved persistence to {self.filepath}")
             except Exception as e:
-                logger.error(f"Error saving persistence file {self.filepath}: {e}")
+                logger.error(
+                    f"Error saving persistence file {self.filepath}: {e}")
 
     async def get_user_data(self) -> Dict[int, Dict[Any, Any]]:
         logger.debug("Getting user data from persistence")
