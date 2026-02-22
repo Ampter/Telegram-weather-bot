@@ -2,6 +2,7 @@ import os
 import logging
 import threading
 from typing import Dict, Any, Optional
+from contextlib import suppress
 from telegram.ext import BasePersistence
 
 logger = logging.getLogger(__name__)
@@ -10,13 +11,24 @@ logger = logging.getLogger(__name__)
 class TextFilePersistence(BasePersistence):
     """Custom persistence class that stores user cities in a text file: user_id;city"""
 
-    def __init__(self, filepath: str):
+    def __init__(self, filepath: str, flush_interval_seconds: Optional[float] = None):
         super().__init__()
         self.filepath = filepath
         self.user_data_cache: Dict[int, Dict[str, Any]] = {}
         self._lock = threading.Lock()
         self._dirty = False
+        self._flush_interval_seconds = flush_interval_seconds
+        self._stop_event = threading.Event()
+        self._flush_thread: Optional[threading.Thread] = None
         self._load()
+
+        if flush_interval_seconds and flush_interval_seconds > 0:
+            self._flush_thread = threading.Thread(
+                target=self._periodic_flush_loop,
+                name="text-file-persistence-flush",
+                daemon=True,
+            )
+            self._flush_thread.start()
 
     def _load(self):
         if not os.path.exists(self.filepath):
@@ -40,6 +52,20 @@ class TextFilePersistence(BasePersistence):
                 f"Loaded {len(self.user_data_cache)} users from {self.filepath}")
         except Exception as e:
             logger.error(f"Error loading persistence file: {e}")
+
+
+    def _periodic_flush_loop(self) -> None:
+        while not self._stop_event.wait(self._flush_interval_seconds):
+            self._save()
+
+    def stop(self) -> None:
+        self._stop_event.set()
+        if self._flush_thread and self._flush_thread.is_alive():
+            self._flush_thread.join(timeout=1)
+
+    def __del__(self):
+        with suppress(Exception):
+            self.stop()
 
     def _save(self, force: bool = False):
         with self._lock:
