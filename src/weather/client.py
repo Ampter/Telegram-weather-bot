@@ -1,5 +1,6 @@
 import httpx
 import logging
+from itertools import groupby
 from typing import Optional
 from .models import WeatherData, ForecastData, ForecastEntry
 
