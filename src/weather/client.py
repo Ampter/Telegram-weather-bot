@@ -1,10 +1,10 @@
 import httpx
 import logging
 from typing import Optional
-from itertools import groupby
 from .models import WeatherData, ForecastData, ForecastEntry
 
 logger = logging.getLogger(__name__)
+
 
 class WeatherClient:
     def __init__(self, api_key: str):
@@ -30,7 +30,8 @@ class WeatherClient:
                         feels_like=data["main"]["feels_like"]
                     )
                 else:
-                    logger.error(f"Error fetching weather for {city}: {response.status_code} {response.text}")
+                    logger.error(
+                        f"Error fetching weather for {city}: {response.status_code} {response.text}")
                     return None
         except Exception as e:
             logger.exception(f"Unexpected error fetching weather for {city}")
@@ -50,21 +51,25 @@ class WeatherClient:
                     data = response.json()
                     forecast_list = data.get("list", [])
 
-                    # Group by day
-                    key = lambda e: e["dt_txt"].split()[0]
-                    grouped = groupby(forecast_list, key)
-                    entries = []
-                    for _, group in grouped:
-                        entry = next(group)
-                        entries.append(ForecastEntry(
-                            date=entry["dt_txt"].split()[0],
+                    captured = {}
+                    for entry in forecast_list:
+                        date = entry["dt_txt"][:10]
+                        if date in captured:
+                            continue
+
+                        captured[date] = ForecastEntry(
+                            date=date,
                             description=entry["weather"][0]["description"],
                             temperature=entry["main"]["temp"]
-                        ))
+                        )
 
-                    return ForecastData(city=city, entries=entries[:days])
+                        if len(captured) >= days:
+                            break
+
+                    return ForecastData(city=city, entries=list(captured.values()))
                 else:
-                    logger.error(f"Error fetching forecast for {city}: {response.status_code} {response.text}")
+                    logger.error(
+                        f"Error fetching forecast for {city}: {response.status_code} {response.text}")
                     return None
         except Exception as e:
             logger.exception(f"Unexpected error fetching forecast for {city}")
