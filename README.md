@@ -36,7 +36,7 @@ A production-ready Telegram bot that provides real-time weather updates and 3-da
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/Ampter/Telegram-weather-bot
    cd telegram-weather-bot
    ```
 
