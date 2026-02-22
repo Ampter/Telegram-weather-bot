@@ -57,7 +57,8 @@ async def test_weather_command_with_default(handlers, update, context, mock_weat
         return_value=mock_weather)
 
     await handlers.weather_command(update, context)
-    update.effective_message.reply_text.assert_called_once_with(mock_weather.format())
+    update.effective_message.reply_text.assert_called_once_with(
+        mock_weather.format())
 
 
 @pytest.mark.asyncio

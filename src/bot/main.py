@@ -12,6 +12,8 @@ from src.bot.web import run_flask
 from src.persistence import TextFilePersistence
 
 # Configure logging
+
+
 def setup_logging():
     log_format = '%(asctime)s - %(name)s - %(levelname)s - %(filename)s:%(lineno)d - %(message)s'
     log_level = getattr(logging, config.LOG_LEVEL)
@@ -37,13 +39,15 @@ def setup_logging():
     file_handler.setFormatter(logging.Formatter(log_format))
     root_logger.addHandler(file_handler)
 
+
 setup_logging()
 logger = logging.getLogger(__name__)
 
 
 async def error_handler(update: object, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Log the error and send a telegram message to notify the user."""
-    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    logger.error(msg="Exception while handling an update:",
+                 exc_info=context.error)
 
     if isinstance(update, Update) and update.effective_message:
         await update.effective_message.reply_text(
