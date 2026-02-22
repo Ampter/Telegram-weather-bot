@@ -53,7 +53,6 @@ class TextFilePersistence(BasePersistence):
         except Exception as e:
             logger.error(f"Error loading persistence file: {e}")
 
-
     def _periodic_flush_loop(self) -> None:
         while not self._stop_event.wait(self._flush_interval_seconds):
             self._save()

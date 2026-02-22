@@ -68,7 +68,8 @@ async def test_drop_user_data_is_persisted_on_flush(tmp_path):
 @pytest.mark.asyncio
 async def test_periodic_flush_persists_without_manual_flush(tmp_path):
     db_file = tmp_path / "users_periodic.txt"
-    persistence = TextFilePersistence(str(db_file), flush_interval_seconds=0.05)
+    persistence = TextFilePersistence(
+        str(db_file), flush_interval_seconds=0.05)
 
     await persistence.update_user_data(123, {"city": "Berlin"})
 
