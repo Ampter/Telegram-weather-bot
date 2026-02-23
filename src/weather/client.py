@@ -13,7 +13,7 @@ class WeatherClient:
         self.base_url = "https://api.openweathermap.org/data/2.5"
         self._client = httpx.AsyncClient(base_url=self.base_url, timeout=10.0)
 
-    async def aclose(self) -> None:
+    async def aclose(self, _application: object) -> None:
         await self._client.aclose()
 
     async def get_current_weather(self, city: str) -> Optional[WeatherData]:
