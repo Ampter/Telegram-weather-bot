@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock, AsyncMock
 from src.bot.handlers import Handlers
 
+
 @pytest.mark.asyncio
 async def test_weather_command_no_user():
     handlers = Handlers(MagicMock())
@@ -17,6 +18,7 @@ async def test_weather_command_no_user():
     await handlers.weather_command(update, context)
     update.effective_message.reply_text.assert_called_once()
 
+
 @pytest.mark.asyncio
 async def test_forecast_command_no_user():
     handlers = Handlers(MagicMock())
@@ -31,6 +33,7 @@ async def test_forecast_command_no_user():
     # This should not raise AttributeError now
     await handlers.forecast_command(update, context)
     update.effective_message.reply_text.assert_called_once()
+
 
 @pytest.mark.asyncio
 async def test_inline_query_no_user_data():
