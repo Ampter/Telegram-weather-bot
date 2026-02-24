@@ -49,7 +49,7 @@ class Handlers:
         user_id = update.effective_user.id if update.effective_user else "Unknown"
         logger.debug(f"User {user_id} triggered /weather")
         city = " ".join(
-            context.args) if context.args else context.user_data.get('city')
+            context.args) if context.args else (context.user_data.get('city') if context.user_data else None)
 
         if not city:
             await update.effective_message.reply_text("Please provide a city or set a default one with /set_city <city>")
@@ -67,7 +67,7 @@ class Handlers:
         user_id = update.effective_user.id if update.effective_user else "Unknown"
         logger.debug(f"User {user_id} triggered /forecast")
         city = " ".join(
-            context.args) if context.args else context.user_data.get('city')
+            context.args) if context.args else (context.user_data.get('city') if context.user_data else None)
 
         if not city:
             await update.effective_message.reply_text("Please provide a city or set a default one with /set_city <city>")
@@ -87,8 +87,8 @@ class Handlers:
         logger.debug(f"User {user_id} triggered inline query: {query}")
 
         intent, city_from_query = self._parse_inline_query(query)
-        city = city_from_query if city_from_query else context.user_data.get(
-            'city')
+        city = city_from_query if city_from_query else (
+            context.user_data.get('city') if context.user_data else None)
 
         if not city:
             # If no city provided and no default city, we can't show much
@@ -132,7 +132,7 @@ class Handlers:
                 )
             )
 
-        await update.inline_query.answer(results, cache_time=300)
+        await update.inline_query.answer(results, cache_time=300, is_personal=True)
 
     @staticmethod
     def _parse_inline_query(query: str):

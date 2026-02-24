@@ -44,6 +44,6 @@ EXPOSE 10000
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:10000/health
+  CMD curl -f http://localhost:${PORT:-10000}/health || exit 1
 
 CMD ["python", "bot.py"]
