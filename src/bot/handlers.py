@@ -40,6 +40,12 @@ class Handlers:
             return
 
         city = " ".join(context.args)
+        if context.user_data is None:
+            await update.effective_message.reply_text(
+                "User data is not available. This command cannot be used here."
+            )
+            return
+
         context.user_data['city'] = city
         await update.effective_message.reply_text(f"Default city set to: {city}")
         logger.debug(f"/set_city handled for user {user_id}: {city}")
