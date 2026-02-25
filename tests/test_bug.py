@@ -51,6 +51,7 @@ async def test_inline_query_no_user_data():
     # It should just return without answering if city is None
     update.inline_query.answer.assert_not_called()
 
+
 @pytest.mark.asyncio
 async def test_set_city_command_no_user_data():
     handlers = Handlers(MagicMock())
