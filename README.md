@@ -1,6 +1,6 @@
 # 🌤️ Telegram Weather Bot
 
-A production-ready Telegram bot that provides real-time weather updates and 3-day forecasts using the OpenWeather API. Built with Python, `python-telegram-bot` v20 (async), and Docker.
+A Telegram bot that provides real-time weather updates and 3-day forecasts using the OpenWeather API. Built with Python, `python-telegram-bot` v20 (async), and Docker.
 
 ## 🚀 Features
 
