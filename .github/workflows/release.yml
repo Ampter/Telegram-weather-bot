@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine mode
+        id: mode
+        run: |
+          if [ "${{ github.event.action }}" = "closed" ] && [ "${{ github.event.pull_request.merged }}" = "true" ]; then
+            echo "type=stable" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event.action }}" = "closed" ]; then
+            echo "type=cleanup" >> $GITHUB_OUTPUT
+          else
+            echo "type=preview" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set preview version
+        if: steps.mode.outputs.type == 'preview'
+        id: preview_version
+        run: |
+          VERSION="preview-pr-${{ github.event.pull_request.number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create preview archive
+        if: steps.mode.outputs.type == 'preview'
+        run: |
+          mkdir -p dist
+          git archive --format=tar HEAD | gzip > dist/source-${{ steps.preview_version.outputs.version }}.tar.gz
+
+      - name: Create or Update Preview Release
+        if: steps.mode.outputs.type == 'preview'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.preview_version.outputs.version }}
+          name: Preview PR #${{ github.event.pull_request.number }}
+          prerelease: true
+          generate_release_notes: true
+          files: dist/source-${{ steps.preview_version.outputs.version }}.tar.gz
+
+      - name: Delete preview release and tag
+        if: steps.mode.outputs.type == 'cleanup'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="preview-pr-${{ github.event.pull_request.number }}"
+          gh release delete "$TAG" --yes || true
+          git push origin --delete "$TAG" || true
+
+      - name: Set stable version
+        if: steps.mode.outputs.type == 'stable'
+        id: stable_version
+        run: |
+          COUNT=$(git rev-list --count HEAD)
+          VERSION="v0.1.$COUNT"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check duplicate tag
+        if: steps.mode.outputs.type == 'stable'
+        run: |
+          TAG=${{ steps.stable_version.outputs.version }}
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            exit 0
+          fi
+
+      - name: Generate changelog
+        if: steps.mode.outputs.type == 'stable'
+        id: changelog
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            LOG=$(git log --pretty=format:"- %s")
+          else
+            LOG=$(git log $LAST_TAG..HEAD --pretty=format:"- %s")
+          fi
+          echo "log<<EOF" >> $GITHUB_OUTPUT
+          echo "$LOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create stable archive
+        if: steps.mode.outputs.type == 'stable'
+        run: |
+          mkdir -p dist
+          git archive --format=tar HEAD | gzip > dist/source-${{ steps.stable_version.outputs.version }}.tar.gz
+
+      - name: Create tag
+        if: steps.mode.outputs.type == 'stable'
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git tag ${{ steps.stable_version.outputs.version }}
+          git push origin ${{ steps.stable_version.outputs.version }}
+
+      - name: Create Stable Release
+        if: steps.mode.outputs.type == 'stable'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.stable_version.outputs.version }}
+          name: ${{ steps.stable_version.outputs.version }}
+          body: ${{ steps.changelog.outputs.log }}
+          prerelease: false
+          make_latest: true
+          generate_release_notes: true
+          files: dist/source-${{ steps.stable_version.outputs.version }}.tar.gz
