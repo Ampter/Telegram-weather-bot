@@ -17,7 +17,7 @@ jobs:
       contents: write   # needed to push changes
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           # For PRs, check out the head branch of the PR
           # For pushes, check out the branch that was pushed
