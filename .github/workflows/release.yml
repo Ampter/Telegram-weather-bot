@@ -42,7 +42,7 @@ jobs:
 
       - name: Create or Update Preview Release
         if: steps.mode.outputs.type == 'preview'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.preview_version.outputs.version }}
           name: Preview PR #${{ github.event.pull_request.number }}
@@ -105,7 +105,7 @@ jobs:
 
       - name: Create Stable Release
         if: steps.mode.outputs.type == 'stable'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ steps.stable_version.outputs.version }}
           name: ${{ steps.stable_version.outputs.version }}
